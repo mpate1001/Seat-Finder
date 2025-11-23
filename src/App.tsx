@@ -4,6 +4,7 @@ import { fetchGuests } from './services/googleSheets';
 import SearchForm from './components/SearchForm';
 import GuestDropdown from './components/GuestDropdown';
 import TableModal from './components/TableModal';
+import backgroundImage from './assets/mahsompw-6074Z70_6074.jpeg';
 import './App.css';
 
 function App() {
@@ -59,10 +60,10 @@ function App() {
 
   if (loading) {
     return (
-      <div className="app-container">
+      <div className="app-container" style={{ backgroundImage: `url(${backgroundImage})` }}>
         <div className="card">
           <h1 className="title">Seat Finder</h1>
-          <p className="subtitle">Mahek & Saumya's Wedding</p>
+            <p className="subtitle">Mahek & Saumya's Reception</p>
           <div className="loading">Loading guest list...</div>
         </div>
       </div>
@@ -71,7 +72,7 @@ function App() {
 
   if (error) {
     return (
-      <div className="app-container">
+      <div className="app-container" style={{ backgroundImage: `url(${backgroundImage})` }}>
         <div className="card">
           <h1 className="title">Seat Finder</h1>
           <p className="subtitle">Mahek & Saumya's Wedding</p>
@@ -85,10 +86,12 @@ function App() {
   }
 
   return (
-    <div className="app-container">
+    <div className="app-container" style={{ backgroundImage: `url(${backgroundImage})` }}>
       <div className="card">
         <h1 className="title">Seat Finder</h1>
         <p className="subtitle">Mahek & Saumya's Wedding</p>
+        <p className="subtitle">May 24th 2026</p>
+        <p className="subtitle">#MikeMetSaumOne</p>
         <p className="welcome-text">Welcome! Please enter your name to find your table.</p>
 
         <SearchForm onSearch={handleSearch} />
