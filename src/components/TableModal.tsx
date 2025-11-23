@@ -1,4 +1,5 @@
 import { Guest } from '../types';
+import FloorPlan from './FloorPlan';
 import './TableModal.css';
 
 interface TableModalProps {
@@ -20,16 +21,13 @@ export default function TableModal({ guest, onClose }: TableModalProps) {
           </h2>
         </div>
 
-        <div className="table-info">
-          <div className="table-label">Your Table Number</div>
-          <div className="table-number">{guest.tableNumber}</div>
-        </div>
-
         {guest.description && (
           <div className="guest-message">
             {guest.description}
           </div>
         )}
+
+        <FloorPlan tableNumber={guest.tableNumber} />
 
         <button className="done-button" onClick={onClose}>
           Got it!
