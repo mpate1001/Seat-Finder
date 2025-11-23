@@ -31,20 +31,24 @@ function App() {
     }
   }
 
-  function handleSearch(firstName: string, lastName: string) {
-    if (!firstName.trim() && !lastName.trim()) {
+  function handleSearch(searchTerm: string) {
+    if (!searchTerm.trim()) {
       setSearchResults([]);
       return;
     }
 
+    const term = searchTerm.toLowerCase().trim();
     const results = guests.filter((guest) => {
-      const firstMatch = firstName.trim()
-        ? guest.firstName.toLowerCase().includes(firstName.toLowerCase().trim())
-        : true;
-      const lastMatch = lastName.trim()
-        ? guest.lastName.toLowerCase().includes(lastName.toLowerCase().trim())
-        : true;
-      return firstMatch && lastMatch;
+      const fullName = `${guest.firstName} ${guest.lastName}`.toLowerCase();
+      const reverseFullName = `${guest.lastName} ${guest.firstName}`.toLowerCase();
+
+      // Match if search term appears in first name, last name, or full name
+      return (
+        guest.firstName.toLowerCase().includes(term) ||
+        guest.lastName.toLowerCase().includes(term) ||
+        fullName.includes(term) ||
+        reverseFullName.includes(term)
+      );
     });
 
     setSearchResults(results);

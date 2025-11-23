@@ -2,54 +2,37 @@ import { useState, FormEvent } from 'react';
 import './SearchForm.css';
 
 interface SearchFormProps {
-  onSearch: (firstName: string, lastName: string) => void;
+  onSearch: (searchTerm: string) => void;
 }
 
 export default function SearchForm({ onSearch }: SearchFormProps) {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    onSearch(firstName, lastName);
+    onSearch(searchTerm);
   }
 
-  function handleInputChange() {
+  function handleInputChange(value: string) {
+    setSearchTerm(value);
     // Trigger search on every keystroke for real-time results
     setTimeout(() => {
-      onSearch(firstName, lastName);
+      onSearch(value);
     }, 0);
   }
 
   return (
     <form className="search-form" onSubmit={handleSubmit}>
       <div className="form-group">
-        <label htmlFor="firstName">First Name</label>
+        <label htmlFor="searchName">Search by Name</label>
         <input
           type="text"
-          id="firstName"
-          value={firstName}
-          onChange={(e) => {
-            setFirstName(e.target.value);
-            handleInputChange();
-          }}
-          placeholder="Enter first name"
+          id="searchName"
+          value={searchTerm}
+          onChange={(e) => handleInputChange(e.target.value)}
+          placeholder="Enter first or last name"
           autoComplete="off"
-        />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="lastName">Last Name</label>
-        <input
-          type="text"
-          id="lastName"
-          value={lastName}
-          onChange={(e) => {
-            setLastName(e.target.value);
-            handleInputChange();
-          }}
-          placeholder="Enter last name"
-          autoComplete="off"
+          autoFocus
         />
       </div>
     </form>
