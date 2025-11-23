@@ -1,0 +1,151 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: white;
+  border-radius: 20px;
+  padding: 40px 30px;
+  max-width: 400px;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.close-button {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #cbd5e0;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background: #edf2f4;
+  color: #2b2d42;
+}
+
+.modal-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.guest-greeting {
+  font-size: 1.8rem;
+  color: #2d3748;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.table-info {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 30px;
+  background: linear-gradient(135deg, #ef233c 0%, #d90429 100%);
+  border-radius: 15px;
+}
+
+.table-label {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.table-number {
+  font-size: 3.5rem;
+  color: white;
+  font-weight: 700;
+}
+
+.guest-message {
+  background: #edf2f4;
+  padding: 20px;
+  border-radius: 10px;
+  color: #2b2d42;
+  line-height: 1.6;
+  margin-bottom: 30px;
+  text-align: center;
+  font-size: 1rem;
+}
+
+.done-button {
+  width: 100%;
+  padding: 15px;
+  background: #2b2d42;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.done-button:hover {
+  background: #8d99ae;
+}
+
+.done-button:active {
+  background: #ef233c;
+}
+
+@media (max-width: 600px) {
+  .modal-content {
+    padding: 30px 20px;
+  }
+
+  .guest-greeting {
+    font-size: 1.5rem;
+  }
+
+  .table-number {
+    font-size: 3rem;
+  }
+
+  .guest-message {
+    font-size: 0.95rem;
+  }
+}
