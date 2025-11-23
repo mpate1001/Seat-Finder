@@ -1,0 +1,83 @@
+.app-container {
+  width: 100%;
+}
+
+.card {
+  background: white;
+  border-radius: 20px;
+  padding: 40px 30px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #2b2d42;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  color: #ef233c;
+  text-align: center;
+  margin-bottom: 30px;
+  font-weight: 500;
+}
+
+.welcome-text {
+  text-align: center;
+  color: #666;
+  margin-bottom: 30px;
+  font-size: 1rem;
+}
+
+.loading,
+.error {
+  text-align: center;
+  padding: 30px;
+  font-size: 1.1rem;
+}
+
+.loading {
+  color: #2b2d42;
+}
+
+.error {
+  color: #e53e3e;
+  background: #fff5f5;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.retry-button {
+  display: block;
+  width: 100%;
+  padding: 15px;
+  background: #ef233c;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.retry-button:hover {
+  background: #d90429;
+}
+
+@media (max-width: 600px) {
+  .card {
+    padding: 30px 20px;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+}
