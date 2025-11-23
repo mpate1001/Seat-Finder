@@ -36,10 +36,10 @@
 
 .point-marker {
   position: absolute;
-  width: 20px;
-  height: 20px;
-  margin-left: -10px;
-  margin-top: -10px;
+  width: 40px;
+  height: 40px;
+  margin-left: -20px;
+  margin-top: -20px;
   pointer-events: none;
   z-index: 10;
 }
@@ -48,23 +48,23 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 20px;
-  height: 20px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: rgba(239, 35, 60, 0.6);
-  border: 2px solid #ef233c;
+  border: 3px solid #ef233c;
   animation: pulse 2s ease-in-out infinite;
 }
 
 .point-pulse::after {
   content: '';
   position: absolute;
-  top: -2px;
-  left: -2px;
-  width: 20px;
-  height: 20px;
+  top: -3px;
+  left: -3px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  border: 2px solid #ef233c;
+  border: 3px solid #ef233c;
   animation: ripple 2s ease-out infinite;
 }
 
@@ -104,6 +104,93 @@
   font-size: 0.9rem;
 }
 
+/* Enlarged floor plan modal */
+.floor-plan-enlarged-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease;
+}
+
+.floor-plan-enlarged-content {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  width: 98vw;
+  height: 98vh;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.floor-plan-close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(239, 35, 60, 0.9);
+  color: white;
+  border: none;
+  font-size: 2rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: all 0.2s ease;
+  line-height: 1;
+  padding: 0;
+}
+
+.floor-plan-close-button:hover {
+  background: #d90429;
+  transform: scale(1.1);
+}
+
+.floor-plan-enlarged-header {
+  text-align: center;
+  margin-bottom: 20px;
+  flex-shrink: 0;
+}
+
+.floor-plan-enlarged-header h3 {
+  color: #2b2d42;
+  font-size: 1.8rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.canvas-container-enlarged {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  margin: 0 auto;
+  border-radius: 10px;
+  overflow: auto;
+  background: white;
+}
+
+.floor-plan-image-enlarged {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
 /* Mobile optimizations */
 @media (max-width: 600px) {
   .floor-plan-header h3 {
@@ -111,19 +198,48 @@
   }
 
   .point-marker {
-    width: 15px;
-    height: 15px;
-    margin-left: -7.5px;
-    margin-top: -7.5px;
+    width: 30px;
+    height: 30px;
+    margin-left: -15px;
+    margin-top: -15px;
   }
 
-  .point-pulse,
+  .point-pulse {
+    width: 30px;
+    height: 30px;
+  }
+
   .point-pulse::after {
-    width: 15px;
-    height: 15px;
+    width: 30px;
+    height: 30px;
+    top: -3px;
+    left: -3px;
   }
 
   .floor-plan-legend p {
     font-size: 0.85rem;
+  }
+
+  .floor-plan-enlarged-content {
+    padding: 20px;
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  .floor-plan-enlarged-header {
+    margin-bottom: 15px;
+  }
+
+  .floor-plan-enlarged-header h3 {
+    font-size: 1.3rem;
+  }
+
+  .floor-plan-close-button {
+    width: 45px;
+    height: 45px;
+    font-size: 1.8rem;
+    top: 15px;
+    right: 15px;
   }
 }
