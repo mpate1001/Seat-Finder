@@ -104,6 +104,11 @@
   font-size: 0.9rem;
 }
 
+.floor-plan-legend .floor-plan-warning {
+  color: #d90429;
+  font-weight: 500;
+}
+
 /* Enlarged floor plan modal */
 .floor-plan-enlarged-overlay {
   position: fixed;

@@ -5,6 +5,11 @@ const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT2CjdXZd0XrE
 export async function fetchGuests(): Promise<Guest[]> {
   try {
     const response = await fetch(SHEET_URL);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch guest list: ${response.status} ${response.statusText}`);
+    }
+
     const csvText = await response.text();
 
     // Parse CSV
@@ -46,7 +51,13 @@ function parseCSVLine(line: string): string[] {
     const char = line[i];
 
     if (char === '"') {
-      inQuotes = !inQuotes;
+      // Handle escaped quotes (two double quotes in a row)
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++; // Skip the next quote
+      } else {
+        inQuotes = !inQuotes;
+      }
     } else if (char === ',' && !inQuotes) {
       result.push(current);
       current = '';

@@ -17,7 +17,7 @@ export default function GuestDropdown({ guests, onSelect }: GuestDropdownProps) 
       <div className="dropdown-list">
         {guests.map((guest, index) => (
           <button
-            key={index}
+            key={`${guest.firstName}-${guest.lastName}-${guest.tableNumber}-${index}`}
             className="guest-item"
             onClick={() => onSelect(guest)}
           >
