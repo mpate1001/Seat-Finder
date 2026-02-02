@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Guest } from '../types';
 import FloorPlan from './FloorPlan';
 import './TableModal.css';
@@ -8,6 +9,18 @@ interface TableModalProps {
 }
 
 export default function TableModal({ guest, onClose }: TableModalProps) {
+  // Handle escape key to close modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>

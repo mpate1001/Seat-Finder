@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, useRef, useCallback, FormEvent } from 'react';
 import './SearchForm.css';
 
 interface SearchFormProps {
@@ -7,18 +7,29 @@ interface SearchFormProps {
 
 export default function SearchForm({ onSearch }: SearchFormProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const debounceRef = useRef<number | null>(null);
+
+  const debouncedSearch = useCallback((value: string) => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    debounceRef.current = window.setTimeout(() => {
+      onSearch(value);
+    }, 150);
+  }, [onSearch]);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    // Immediate search on submit
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
     onSearch(searchTerm);
   }
 
   function handleInputChange(value: string) {
     setSearchTerm(value);
-    // Trigger search on every keystroke for real-time results
-    setTimeout(() => {
-      onSearch(value);
-    }, 0);
+    debouncedSearch(value);
   }
 
   return (
