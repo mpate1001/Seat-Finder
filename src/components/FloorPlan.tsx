@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import './FloorPlan.css';
 import floorPlanConfig from '../config/floorPlan.json';
 // Import floor plan image - update this import when changing the floor plan image
@@ -20,18 +20,45 @@ interface FloorPlanConfig {
 
 const config: FloorPlanConfig = floorPlanConfig;
 
+if (import.meta.env.DEV) {
+  const seen = new Map<string, string>();
+  for (const [id, pos] of Object.entries(config.tablePositions)) {
+    const key = `${pos.x.toFixed(4)},${pos.y.toFixed(4)}`;
+    if (seen.has(key)) {
+      console.warn(`Duplicate table position: ${id} and ${seen.get(key)} at ${key}`);
+    }
+    seen.set(key, id);
+  }
+}
+
 export default function FloorPlan({ tableNumber }: FloorPlanProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageWidth, setImageWidth] = useState(0);
+  const [imageHeight, setImageHeight] = useState(0);
   const [isEnlarged, setIsEnlarged] = useState(false);
   const [enlargedDimensions, setEnlargedDimensions] = useState({ width: 0, height: 0, offsetX: 0, offsetY: 0 });
+  const imageRef = useRef<HTMLImageElement>(null);
   const position = config.tablePositions[tableNumber];
   const hasValidPosition = Boolean(position);
 
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     setImageWidth(e.currentTarget.offsetWidth);
+    setImageHeight(e.currentTarget.offsetHeight);
     setImageLoaded(true);
   };
+
+  useEffect(() => {
+    const el = imageRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setImageWidth(entry.contentRect.width);
+        setImageHeight(entry.contentRect.height);
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const handleEnlargedImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
@@ -83,11 +110,6 @@ export default function FloorPlan({ tableNumber }: FloorPlanProps) {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isEnlarged, handleClose]);
 
-  // Coordinates in floorPlan.json are percentages (0-1), so scaleFactor equals displayed width in px.
-  // Plan 02 will introduce ResizeObserver and cleaner render math.
-  const scaleFactor = imageWidth;
-  const enlargedScaleFactor = enlargedDimensions.width;
-
   return (
     <>
       <div className="floor-plan-container">
@@ -97,19 +119,20 @@ export default function FloorPlan({ tableNumber }: FloorPlanProps) {
 
         <div className="canvas-container" onClick={handleEnlarge} style={{ cursor: 'pointer' }}>
           <img
+            ref={imageRef}
             src={floorPlanImageSrc}
             alt="Reception Floor Plan"
             className="floor-plan-image"
             onLoad={handleImageLoad}
           />
 
-          {imageLoaded && position && scaleFactor > 0 && (
+          {imageLoaded && position && imageWidth > 0 && imageHeight > 0 && (
             <div
               className="point-marker"
               data-table-id={tableNumber}
               style={{
-                left: `${position.x * scaleFactor}px`,
-                top: `${position.y * scaleFactor}px`,
+                left: `${position.x * imageWidth}px`,
+                top: `${position.y * imageHeight}px`,
               }}
             >
               <div className="point-pulse" />
@@ -143,13 +166,13 @@ export default function FloorPlan({ tableNumber }: FloorPlanProps) {
                 onLoad={handleEnlargedImageLoad}
               />
 
-              {imageLoaded && position && enlargedScaleFactor > 0 && (
+              {imageLoaded && position && enlargedDimensions.width > 0 && (
                 <div
                   className="point-marker"
                   data-table-id={tableNumber}
                   style={{
-                    left: `${enlargedDimensions.offsetX + (position.x * enlargedScaleFactor)}px`,
-                    top: `${enlargedDimensions.offsetY + (position.y * enlargedScaleFactor)}px`,
+                    left: `${enlargedDimensions.offsetX + position.x * enlargedDimensions.width}px`,
+                    top: `${enlargedDimensions.offsetY + position.y * enlargedDimensions.height}px`,
                   }}
                 >
                   <div className="point-pulse" />
