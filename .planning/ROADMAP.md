@@ -28,7 +28,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. Tables 46 and 47 appear in visually distinct positions on the floor plan — they no longer overlap
   2. Resizing the browser window or changing the floor plan image does not shift any table marker off its correct position
   3. A guest list CSV with reordered or renamed columns still parses correctly without code changes
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] 01-01-PLAN.md — Migrate floorPlan.json to percentage coords and fix table 47 (DATA-01, DATA-02)
+- [ ] 01-02-PLAN.md — Rewrite FloorPlan.tsx scaling math with ResizeObserver, drop canvas fields (DATA-02)
+- [ ] 01-03-PLAN.md — Header-indexed CSV parsing in googleSheets.ts (DATA-03)
 
 ### Phase 2: Fuzzy Search
 **Goal**: Guests can find their name even with typos, partial names, or mobile autocorrect errors
@@ -82,7 +85,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Integrity | 0/TBD | Not started | - |
+| 1. Data Integrity | 0/3 | Not started | - |
 | 2. Fuzzy Search | 0/TBD | Not started | - |
 | 3. Map Experience | 0/TBD | Not started | - |
 | 4. Performance & Offline | 0/TBD | Not started | - |
