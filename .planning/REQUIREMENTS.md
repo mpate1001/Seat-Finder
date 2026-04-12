@@ -78,31 +78,31 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SRCH-01 | Pending | Pending |
-| SRCH-02 | Pending | Pending |
-| SRCH-03 | Pending | Pending |
-| SRCH-04 | Pending | Pending |
-| MAP-01 | Pending | Pending |
-| MAP-02 | Pending | Pending |
-| MAP-03 | Pending | Pending |
-| MAP-04 | Pending | Pending |
-| MAP-05 | Pending | Pending |
-| DATA-01 | Pending | Pending |
-| DATA-02 | Pending | Pending |
-| DATA-03 | Pending | Pending |
-| PERF-01 | Pending | Pending |
-| PERF-02 | Pending | Pending |
-| PERF-03 | Pending | Pending |
-| PERF-04 | Pending | Pending |
-| TOOL-01 | Pending | Pending |
-| TOOL-02 | Pending | Pending |
-| TOOL-03 | Pending | Pending |
+| DATA-01 | Phase 1 | Pending |
+| DATA-02 | Phase 1 | Pending |
+| DATA-03 | Phase 1 | Pending |
+| SRCH-01 | Phase 2 | Pending |
+| SRCH-02 | Phase 2 | Pending |
+| SRCH-03 | Phase 2 | Pending |
+| SRCH-04 | Phase 2 | Pending |
+| MAP-01 | Phase 3 | Pending |
+| MAP-02 | Phase 3 | Pending |
+| MAP-03 | Phase 3 | Pending |
+| MAP-04 | Phase 3 | Pending |
+| MAP-05 | Phase 3 | Pending |
+| PERF-01 | Phase 4 | Pending |
+| PERF-02 | Phase 4 | Pending |
+| PERF-03 | Phase 4 | Pending |
+| PERF-04 | Phase 4 | Pending |
+| TOOL-01 | Phase 5 | Pending |
+| TOOL-02 | Phase 5 | Pending |
+| TOOL-03 | Phase 5 | Pending |
 
 **Coverage:**
 - v1 requirements: 19 total
-- Mapped to phases: 0
-- Unmapped: 19
+- Mapped to phases: 19
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-12*
-*Last updated: 2026-04-12 after initial definition*
+*Last updated: 2026-04-12 after roadmap creation*
