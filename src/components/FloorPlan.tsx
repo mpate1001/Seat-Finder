@@ -15,8 +15,6 @@ interface TablePosition {
 
 interface FloorPlanConfig {
   imageFileName: string;
-  canvasWidth: number;
-  canvasHeight: number;
   tablePositions: Record<string, TablePosition>;
 }
 
@@ -41,7 +39,7 @@ export default function FloorPlan({ tableNumber }: FloorPlanProps) {
     const containerHeight = img.parentElement?.offsetHeight || 0;
 
     // Calculate actual displayed dimensions with object-fit: contain
-    const imageAspect = config.canvasWidth / config.canvasHeight;
+    const imageAspect = img.naturalWidth / img.naturalHeight;
     const containerAspect = containerWidth / containerHeight;
 
     let displayWidth, displayHeight, offsetX, offsetY;
@@ -85,9 +83,10 @@ export default function FloorPlan({ tableNumber }: FloorPlanProps) {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isEnlarged, handleClose]);
 
-  // Calculate scaling factor based on displayed image width vs original width
-  const scaleFactor = imageWidth / config.canvasWidth;
-  const enlargedScaleFactor = enlargedDimensions.width / config.canvasWidth;
+  // Coordinates in floorPlan.json are percentages (0-1), so scaleFactor equals displayed width in px.
+  // Plan 02 will introduce ResizeObserver and cleaner render math.
+  const scaleFactor = imageWidth;
+  const enlargedScaleFactor = enlargedDimensions.width;
 
   return (
     <>
