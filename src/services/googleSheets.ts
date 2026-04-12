@@ -2,6 +2,14 @@ import { Guest } from '../types';
 
 const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT2CjdXZd0XrE_Q9_BoNWhIqr69ElM60e7CgVvYSWIVA4QRs8CtVV-3UWqWaco9jk9iestkouEd_7en/pub?output=csv';
 
+const HEADER_MAP: Record<keyof Guest, string> = {
+  tableNumber: 'table number',
+  firstName: 'first name',
+  lastName: 'last name',
+  contactInfo: 'contact info',
+  description: 'guest description',
+};
+
 export async function fetchGuests(): Promise<Guest[]> {
   try {
     const response = await fetch(SHEET_URL);
@@ -12,27 +20,39 @@ export async function fetchGuests(): Promise<Guest[]> {
 
     const csvText = await response.text();
 
-    // Parse CSV
     const lines = csvText.split('\n');
-    const guests: Guest[] = [];
+    if (lines.length === 0 || !lines[0].trim()) {
+      throw new Error('Guest list is empty');
+    }
 
-    // Skip header row (index 0), start from index 1
+    const headerIndex = buildHeaderIndex(lines[0]);
+
+    const idx: Record<keyof Guest, number | undefined> = {
+      tableNumber: headerIndex[HEADER_MAP.tableNumber],
+      firstName: headerIndex[HEADER_MAP.firstName],
+      lastName: headerIndex[HEADER_MAP.lastName],
+      contactInfo: headerIndex[HEADER_MAP.contactInfo],
+      description: headerIndex[HEADER_MAP.description],
+    };
+
+    const missing = (Object.keys(idx) as (keyof Guest)[])
+      .filter((k) => idx[k] === undefined);
+    if (missing.length > 0) {
+      throw new Error(`Guest list is missing required column(s): ${missing.join(', ')}`);
+    }
+
+    const guests: Guest[] = [];
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line) continue;
-
-      // Simple CSV parser (handles quoted fields)
       const fields = parseCSVLine(line);
-
-      if (fields.length >= 5) {
-        guests.push({
-          tableNumber: fields[0].trim(),
-          firstName: fields[1].trim(),
-          lastName: fields[2].trim(),
-          contactInfo: fields[3].trim(),
-          description: fields[4].trim(),
-        });
-      }
+      guests.push({
+        tableNumber: (fields[idx.tableNumber!] ?? '').trim(),
+        firstName: (fields[idx.firstName!] ?? '').trim(),
+        lastName: (fields[idx.lastName!] ?? '').trim(),
+        contactInfo: (fields[idx.contactInfo!] ?? '').trim(),
+        description: (fields[idx.description!] ?? '').trim(),
+      });
     }
 
     return guests;
@@ -68,4 +88,17 @@ function parseCSVLine(line: string): string[] {
 
   result.push(current);
   return result;
+}
+
+function buildHeaderIndex(headerLine: string): Record<string, number> {
+  const headers = parseCSVLine(headerLine);
+  const index: Record<string, number> = {};
+  headers.forEach((h, i) => {
+    const key = h.trim().toLowerCase();
+    if (key in index) {
+      console.warn(`Duplicate CSV header "${key}" at column ${i}; using rightmost occurrence`);
+    }
+    index[key] = i;
+  });
+  return index;
 }
