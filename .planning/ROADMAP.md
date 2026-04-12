@@ -12,7 +12,7 @@ Starting from a working React/Vite app with basic search and a static floor plan
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Data Integrity** - Fix the table coordinate bug and harden data parsing so all downstream features build on a correct foundation
+- [x] **Phase 1: Data Integrity** - Fix the table coordinate bug and harden data parsing so all downstream features build on a correct foundation
 - [ ] **Phase 2: Fuzzy Search** - Replace `.includes()` with fuzzy matching so guests find their name despite typos and mobile keyboard errors
 - [ ] **Phase 3: Map Experience** - Add animated pan+zoom, pinch-to-zoom, and improved markers so guests can visually navigate to their table
 - [ ] **Phase 4: Performance & Offline** - Cache the guest list and install a PWA service worker so the app works reliably on venue WiFi and poor cellular
@@ -48,6 +48,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Goal**: Selecting a guest animates the floor plan to center on their table, and the map is usable on mobile
 **Depends on**: Phase 1
 **Requirements**: MAP-01, MAP-02, MAP-03, MAP-04, MAP-05
+**Carried forward from Phase 1 UAT**: Enlarged floor plan modal is constrained to phone-width container (wallpaper shows around it) — should fill viewport when enlarged
 **Success Criteria** (what must be TRUE):
   1. After selecting a name, the floor plan smoothly pans and zooms to place the guest's table near the center of the screen
   2. A guest on an iPhone can pinch to zoom and drag to pan the floor plan without triggering page scroll

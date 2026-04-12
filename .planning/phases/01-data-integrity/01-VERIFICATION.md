@@ -1,8 +1,8 @@
 ---
 phase: 01-data-integrity
 verified: 2026-04-12T00:00:00Z
-status: human_needed
-score: 3/3 must-haves code-verified (1 requires human browser verification)
+status: passed
+score: 3/3 must-haves code-verified; human UAT 3 pass / 1 skip (see 01-HUMAN-UAT.md)
 overrides_applied: 0
 human_verification:
   - test: "Visual distinctness of tables 46 and 47 on the rendered floor plan"
