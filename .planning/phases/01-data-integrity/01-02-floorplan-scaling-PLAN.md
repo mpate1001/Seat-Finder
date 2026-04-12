@@ -14,7 +14,7 @@ must_haves:
     - "Markers render at the correct position in normal view using percentage * displayed image dimensions"
     - "Markers render at the correct position in enlarged view using percentage * enlarged display dimensions + offsets"
     - "Resizing the browser window does not shift markers off their tables"
-    - "FloorPlanConfig interface no longer references canvasWidth or canvasHeight"
+    - "FloorPlan.tsx contains no references to canvasWidth or canvasHeight"
   artifacts:
     - path: "src/components/FloorPlan.tsx"
       provides: "Percentage-based marker rendering"
@@ -27,10 +27,12 @@ must_haves:
 ---
 
 <objective>
-Rewrite `FloorPlan.tsx` scaling math to consume percentage coordinates from the migrated `floorPlan.json`, add window-resize robustness, and drop all references to `canvasWidth`/`canvasHeight`.
+Rewrite `FloorPlan.tsx` scaling math to consume percentage coordinates from the migrated `floorPlan.json`, add window-resize robustness via ResizeObserver, and remove all remaining references to `canvasWidth`/`canvasHeight`.
 
 Purpose: Close DATA-02 — markers must render correctly against the displayed image in both normal and enlarged views, and survive browser resizes / image swaps.
-Output: Updated `FloorPlan.tsx` with `imageHeight` state, `ResizeObserver`-backed resize handling, percentage-based marker math at both render sites, `FloorPlanConfig` interface stripped of canvas fields, and a dev-only duplicate-coordinate warning.
+Output: Updated `FloorPlan.tsx` with `imageHeight` state, `ResizeObserver`-backed resize handling, percentage-based marker math at both render sites, and a dev-only duplicate-coordinate warning.
+
+Note: The `FloorPlanConfig` interface was already stripped of `canvasWidth`/`canvasHeight` in Plan 01 (Wave 1), so this plan starts from a clean interface and focuses on render logic only.
 </objective>
 
 <execution_context>
@@ -54,7 +56,7 @@ Post-Plan-01 JSON shape (input to this plan):
 }
 ```
 
-Target TypeScript interface (this plan):
+Post-Plan-01 TypeScript interface (already in place — do not re-edit):
 ```typescript
 interface TablePosition { x: number; y: number; }
 interface FloorPlanConfig {
@@ -76,32 +78,27 @@ Render formula (enlarged view):
 <tasks>
 
 <task type="auto">
-  <name>Task 1: Switch FloorPlan.tsx to percentage-based scaling with imageHeight + ResizeObserver</name>
+  <name>Task 1: Switch FloorPlan.tsx render sites to percentage-based scaling with imageHeight + ResizeObserver</name>
   <files>src/components/FloorPlan.tsx</files>
   <read_first>
-    - src/components/FloorPlan.tsx (full current file — 2 marker render sites)
+    - src/components/FloorPlan.tsx (full current file — 2 marker render sites; `FloorPlanConfig` interface already post-Plan-01)
     - src/config/floorPlan.json (post-Plan-01 percentage shape)
     - .planning/phases/01-data-integrity/01-RESEARCH.md (sections: "FloorPlan.tsx Scaling Rewrite", "Duplicate Coordinate Validation", "Pitfall 2/5/6")
     - .planning/phases/01-data-integrity/01-CONTEXT.md (D-05)
+    - .planning/phases/01-data-integrity/01-01-SUMMARY.md (confirms interface already cleaned)
   </read_first>
   <action>
     Modify `src/components/FloorPlan.tsx` as follows. Preserve existing code style (2-space indent, single quotes in TS, semicolons, `function` declarations, default export, PascalCase interfaces).
 
-    1. Update `FloorPlanConfig` interface — REMOVE both `canvasWidth: number;` and `canvasHeight: number;` lines. Final interface:
-       ```typescript
-       interface FloorPlanConfig {
-         imageFileName: string;
-         tablePositions: Record<string, TablePosition>;
-       }
-       ```
+    NOTE: The `FloorPlanConfig` interface was already updated in Plan 01 Task 1 (Wave 1) to drop `canvasWidth`/`canvasHeight`. Do NOT re-edit the interface — it is already in the target shape. This task focuses on render logic and state.
 
-    2. Add `imageHeight` state alongside `imageWidth`:
+    1. Add `imageHeight` state alongside `imageWidth`:
        ```typescript
        const [imageWidth, setImageWidth] = useState(0);
        const [imageHeight, setImageHeight] = useState(0);
        ```
 
-    3. Update `handleImageLoad` to capture both dimensions:
+    2. Update `handleImageLoad` to capture both dimensions:
        ```typescript
        const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
          setImageWidth(e.currentTarget.offsetWidth);
@@ -110,7 +107,7 @@ Render formula (enlarged view):
        };
        ```
 
-    4. Add a `ResizeObserver` in a `useEffect` that watches the normal-view `<img>` and updates `imageWidth`/`imageHeight` on resize. Use a `useRef<HTMLImageElement>(null)` attached to the img via `ref={imageRef}`. Clean up observer on unmount. This satisfies success criterion 2 robustly (per RESEARCH "Window Resize Handling" Option 2).
+    3. Add a `ResizeObserver` in a `useEffect` that watches the normal-view `<img>` and updates `imageWidth`/`imageHeight` on resize. Use a `useRef<HTMLImageElement>(null)` attached to the img via `ref={imageRef}`. Clean up observer on unmount (per RESEARCH "Window Resize Handling" Option 2 RESOLVED):
        ```typescript
        const imageRef = useRef<HTMLImageElement>(null);
        useEffect(() => {
@@ -127,9 +124,9 @@ Render formula (enlarged view):
        }, []);
        ```
 
-    5. REMOVE the `scaleFactor` and `enlargedScaleFactor` lines entirely (they compute against the dropped `config.canvasWidth`).
+    4. REMOVE the `scaleFactor` and `enlargedScaleFactor` lines entirely (they compute against the now-removed `config.canvasWidth`). If these reads were already removed as part of Plan 01's build-green fallback, this step is a no-op.
 
-    6. Update the normal-view marker site (currently lines 107-118) to use percentage math:
+    5. Update the normal-view marker site (currently lines 107-118) to use percentage math:
        ```tsx
        {imageLoaded && position && imageWidth > 0 && imageHeight > 0 && (
          <div
@@ -145,13 +142,13 @@ Render formula (enlarged view):
        )}
        ```
 
-    7. Update `handleEnlargedImageLoad` to derive aspect from the loaded image, not the dropped canvas fields:
+    6. Update `handleEnlargedImageLoad` to derive aspect from the loaded image, not the dropped canvas fields:
        ```typescript
        const imageAspect = img.naturalWidth / img.naturalHeight;
        ```
-       (Replace the existing `config.canvasWidth / config.canvasHeight` line. The rest of the function — containerAspect branching, offsetX/offsetY, setEnlargedDimensions — stays identical.)
+       (Replace the existing `config.canvasWidth / config.canvasHeight` line if still present. The rest of the function — containerAspect branching, offsetX/offsetY, setEnlargedDimensions — stays identical.)
 
-    8. Update the enlarged-view marker site (currently lines 147-158) to percentage math:
+    7. Update the enlarged-view marker site (currently lines 147-158) to percentage math:
        ```tsx
        {imageLoaded && position && enlargedDimensions.width > 0 && (
          <div
@@ -167,7 +164,7 @@ Render formula (enlarged view):
        )}
        ```
 
-    9. Add a dev-only duplicate-coordinate warning at module scope (after `const config: FloorPlanConfig = floorPlanConfig;`). This runs once at import time and is tree-shaken from prod builds via `import.meta.env.DEV` (per RESEARCH "Duplicate Coordinate Validation"):
+    8. Add a dev-only duplicate-coordinate warning at module scope (after `const config: FloorPlanConfig = floorPlanConfig;`). This runs once at import time and is tree-shaken from prod builds via `import.meta.env.DEV` (per RESEARCH "Duplicate Coordinate Validation"):
        ```typescript
        if (import.meta.env.DEV) {
          const seen = new Map<string, string>();
@@ -181,11 +178,11 @@ Render formula (enlarged view):
        }
        ```
 
-    10. Add `useRef` to the existing React import line: `import { useEffect, useState, useCallback, useRef } from 'react';`.
+    9. Add `useRef` to the existing React import line: `import { useEffect, useState, useCallback, useRef } from 'react';`.
 
-    11. Attach `ref={imageRef}` to the normal-view `<img>` tag (the one inside `.canvas-container`, not the enlarged one).
+    10. Attach `ref={imageRef}` to the normal-view `<img>` tag (the one inside `.canvas-container`, not the enlarged one).
 
-    DO NOT touch FloorPlan.css. DO NOT rename any classes. DO NOT change the enlarged view's onClick/escape/close logic.
+    DO NOT touch FloorPlan.css. DO NOT rename any classes. DO NOT change the enlarged view's onClick/escape/close logic. DO NOT re-edit the `FloorPlanConfig` interface (already handled in Plan 01).
   </action>
   <verify>
     <automated>npm run lint && npm run build</automated>

@@ -467,22 +467,22 @@ See full snippet in "Header-Based CSV Parsing" section above.
 
 **Planner action:** Surface A1 and A2 to the user during `/gsd-plan-phase` review. A3 is verifiable by a 1-command grep. A4 and A5 are low-risk.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Exact visual location of table 47**
    - What we know: 46 and 47 share `(2170, 920)`. Layout is symmetric. Outer-right-column pattern suggests `(2263, 920)`.
-   - What's unclear: Whether the source floor plan image shows 47 adjacent to 46 horizontally, or offset vertically.
-   - Recommendation: Planner asks user to eyeball `src/assets/Reception Seat Diagram.png` and confirm or correct `(2263, 920)` before the migration task runs.
+   - What was unclear: Whether the source floor plan image shows 47 adjacent to 46 horizontally, or offset vertically.
+   - RESOLVED: Option A — Table 47 placed at `(2263, 920)` → `{ "x": 0.6858, "y": 0.3655 }`; Table 46 remains at `(2170, 920)` → `{ "x": 0.6576, "y": 0.3655 }`. Adopted by Plan 01 Task 1.
 
 2. **Should the one-off migration be scripted or hand-edited?**
    - What we know: 54 rows × 2 values = 108 numbers to transform.
-   - What's unclear: Whether the planner prefers a throwaway Node script in `scripts/` or an inline computation.
-   - Recommendation: Use a throwaway Node script (`node -e`) run once and committed only as the resulting JSON diff. Keeps the repo clean.
+   - What was unclear: Whether the planner prefers a throwaway Node script in `scripts/` or an inline computation.
+   - RESOLVED: Use an inline `node -e` one-off computation at task execution time; do NOT commit a script file to the repo. Adopted by Plan 01 Task 1 (action step 6).
 
 3. **Window resize handling scope**
    - What we know: Success criterion 2 says "resizing the browser window does not shift any table marker".
-   - What's unclear: Whether CSS `width: 100%` alone is enough, or if `ResizeObserver` is required.
-   - Recommendation: Test with CSS-only first; add `ResizeObserver` if manual resize test fails.
+   - What was unclear: Whether CSS `width: 100%` alone is enough, or if `ResizeObserver` is required.
+   - RESOLVED: Option 2 — add `ResizeObserver` on the normal-view `<img>` to update `imageWidth`/`imageHeight` on resize. Adopted by Plan 02 Task 1 (action step 4).
 
 ## Environment Availability
 

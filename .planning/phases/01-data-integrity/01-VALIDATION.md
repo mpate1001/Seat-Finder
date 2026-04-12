@@ -2,8 +2,8 @@
 phase: 1
 slug: data-integrity
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-04-12
 ---
 
@@ -40,17 +40,17 @@ created: 2026-04-12
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
 | 1-01-01 | 01 | 1 | DATA-01, DATA-02 | — | N/A | build | `npm run build` | ✅ existing | ⬜ pending |
 | 1-02-01 | 02 | 2 | DATA-02 | — | N/A | build | `npm run build` | ✅ existing | ⬜ pending |
-| 1-03-01 | 03 | 3 | DATA-03 | — | N/A | build | `npm run build` | ✅ existing | ⬜ pending |
+| 1-03-01 | 03 | 1 | DATA-03 | — | N/A | build | `npm run build` | ✅ existing | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
-*Note: Tasks above are placeholders — actual task IDs set by planner.*
+*Note: Plan 03 runs in parallel with Plan 01 at Wave 1 (disjoint files — `src/services/googleSheets.ts` vs `src/config/floorPlan.json`). Plan 02 depends on Plan 01 and runs at Wave 2.*
 
 ---
 
 ## Wave 0 Requirements
 
-Existing infrastructure covers all phase requirements (TypeScript strict mode + Vite build catch dropped-field references; `npm run lint` catches unused imports and React Hook issues).
+Existing infrastructure covers all phase requirements (TypeScript strict mode + Vite build catch dropped-field references; `npm run lint` catches unused imports and React Hook issues). No Wave 0 test scaffolding needed.
 
 ---
 
@@ -66,11 +66,11 @@ Existing infrastructure covers all phase requirements (TypeScript strict mode + 
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify (`npm run lint` / `npm run build`) or manual check above
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references — N/A (no new test infra)
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 30s
-- [ ] `nyquist_compliant: true` set in frontmatter after planner fills task IDs
+- [x] All tasks have `<automated>` verify (`npm run lint` / `npm run build`) or manual check above
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references — N/A (no new test infra)
+- [x] No watch-mode flags
+- [x] Feedback latency < 30s
+- [x] `nyquist_compliant: true` set in frontmatter after planner fills task IDs
 
-**Approval:** pending
+**Approval:** approved 2026-04-12
