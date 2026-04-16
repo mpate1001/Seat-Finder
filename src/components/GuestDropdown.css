@@ -53,6 +53,22 @@
   color: #718096;
 }
 
+.guest-name strong {
+  font-weight: 800;
+  color: #d90429;
+}
+
+.no-results {
+  padding: 16px;
+  text-align: center;
+  color: #2b2d42;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  background: white;
+  border: 2px solid #edf2f4;
+  border-radius: 10px;
+}
+
 @media (max-width: 600px) {
   .guest-item {
     padding: 12px;

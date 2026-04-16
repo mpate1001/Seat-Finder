@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Guest } from './types';
 import { fetchGuests } from './services/googleSheets';
+import { buildGuestIndex, searchGuests, type RankedGuest } from './services/searchGuests';
 import SearchForm from './components/SearchForm';
 import GuestDropdown from './components/GuestDropdown';
 import TableModal from './components/TableModal';
@@ -11,8 +12,11 @@ function App() {
   const [guests, setGuests] = useState<Guest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchResults, setSearchResults] = useState<Guest[]>([]);
+  const [searchResults, setSearchResults] = useState<RankedGuest[]>([]);
+  const [query, setQuery] = useState('');
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
+
+  const fuse = useMemo(() => buildGuestIndex(guests), [guests]);
 
   useEffect(() => {
     loadGuests();
@@ -32,26 +36,8 @@ function App() {
   }
 
   function handleSearch(searchTerm: string) {
-    if (!searchTerm.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
-    const term = searchTerm.toLowerCase().trim();
-    const results = guests.filter((guest) => {
-      const fullName = `${guest.firstName} ${guest.lastName}`.toLowerCase();
-      const reverseFullName = `${guest.lastName} ${guest.firstName}`.toLowerCase();
-
-      // Match if search term appears in first name, last name, or full name
-      return (
-        guest.firstName.toLowerCase().includes(term) ||
-        guest.lastName.toLowerCase().includes(term) ||
-        fullName.includes(term) ||
-        reverseFullName.includes(term)
-      );
-    });
-
-    setSearchResults(results);
+    setQuery(searchTerm);
+    setSearchResults(searchGuests(searchTerm, guests, fuse));
   }
 
   function handleGuestSelect(guest: Guest) {
@@ -100,8 +86,12 @@ function App() {
 
         <SearchForm onSearch={handleSearch} />
 
-        {searchResults.length > 0 && (
-          <GuestDropdown guests={searchResults} onSelect={handleGuestSelect} />
+        {query.trim().length > 0 && (
+          <GuestDropdown
+            results={searchResults}
+            query={query}
+            onSelect={handleGuestSelect}
+          />
         )}
 
         {selectedGuest && (

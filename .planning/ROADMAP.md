@@ -13,7 +13,7 @@ Starting from a working React/Vite app with basic search and a static floor plan
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Data Integrity** - Fix the table coordinate bug and harden data parsing so all downstream features build on a correct foundation
-- [ ] **Phase 2: Fuzzy Search** - Replace `.includes()` with fuzzy matching so guests find their name despite typos and mobile keyboard errors
+- [x] **Phase 2: Fuzzy Search** - Replace `.includes()` with fuzzy matching so guests find their name despite typos and mobile keyboard errors
 - [ ] **Phase 3: Map Experience** - Add animated pan+zoom, pinch-to-zoom, and improved markers so guests can visually navigate to their table
 - [ ] **Phase 4: Performance & Offline** - Cache the guest list and install a PWA service worker so the app works reliably on venue WiFi and poor cellular
 - [ ] **Phase 5: Setup Tooling** - Build a click-to-place floor plan editor so future table coordinate mapping requires no manual pixel work
@@ -43,8 +43,8 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. The best-matching name appears first in the results list
   4. Searching a string that matches no guest shows a clear "no results found" message rather than a blank list
 **Plans**: 2 plans
-- [ ] 02-01-PLAN.md — Install Fuse.js, build tiered-ranking searchGuests util, wire into App.tsx (SRCH-01, SRCH-02, SRCH-03, SRCH-04)
-- [ ] 02-02-PLAN.md — HighlightedText component, GuestDropdown highlights + no-results card, UAT (SRCH-02, SRCH-03, SRCH-04)
+- [x] 02-01-PLAN.md — Install Fuse.js, build tiered-ranking searchGuests util, wire into App.tsx (SRCH-01, SRCH-02, SRCH-03, SRCH-04)
+- [x] 02-02-PLAN.md — HighlightedText component, GuestDropdown highlights + no-results card, UAT (SRCH-02, SRCH-03, SRCH-04)
 
 ### Phase 3: Map Experience
 **Goal**: Selecting a guest animates the floor plan to center on their table, and the map is usable on mobile
@@ -89,7 +89,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Data Integrity | 3/3 | Complete | 2026-04-12 |
-| 2. Fuzzy Search | 0/2 | Not started | - |
+| 2. Fuzzy Search | 2/2 | Complete | 2026-04-16 |
 | 3. Map Experience | 0/TBD | Not started | - |
 | 4. Performance & Offline | 0/TBD | Not started | - |
 | 5. Setup Tooling | 0/TBD | Not started | - |
