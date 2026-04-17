@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-05-PLAN.md (awaiting UAT on Task 4 checkpoint)
-last_updated: "2026-04-17T22:10:45.821Z"
+stopped_at: Completed 05-06-PLAN.md (Approve + byte-equivalent export, TOOL-02 contract proven)
+last_updated: "2026-04-17T22:28:57.826Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 24
-  completed_plans: 21
-  percent: 88
+  completed_plans: 22
+  percent: 92
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-12)
 ## Current Position
 
 Phase: 05 (setup-tooling) — EXECUTING
-Plan: 6 of 7
+Plan: 7 of 7
 Status: Ready to execute
 Last activity: 2026-04-17
 
@@ -64,6 +64,7 @@ Progress: [████████░░] 83%
 | Phase 05-setup-tooling P01 | 5min | 3 tasks | 9 files |
 | Phase 05-setup-tooling P04 | 10min | 3 tasks | 7 files |
 | Phase 05-setup-tooling P05 | 12min | 3 tasks | 13 files |
+| Phase 05-setup-tooling P06 | 5min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -105,6 +106,9 @@ Recent decisions affecting current work:
 - [Phase 05-setup-tooling]: Plan 05-04: runDetectionPipeline does NOT close the source bitmap — caller (SetupApp, plan 05-05) owns the ImageBitmap lifecycle so the source image remains visible under the pin-review overlay
 - [Phase 05-setup-tooling]: Plan 05-04: OffscreenCanvas polyfill added to src/test/setup.ts (jsdom gap) — minimal shape with putImageData no-op; sufficient because ocr.test.ts mocks Tesseract so the fake worker never reads canvas pixels
 - [Phase 05-setup-tooling]: Plan 05-04: belt-and-suspenders /[^0-9]/g digit strip inside pipeline.ts AFTER the Tesseract whitelist — whitelist leaks have been seen in v7 edge cases (trailing punct); free defense
+- [Phase 05-setup-tooling]: Plan 05-06: serializeFloorPlanConfig uses toFixed(4), not raw numeric interpolation — committed floorPlan.json preserves trailing zeros (0.2770 not 0.277) and JSON.stringify drops them
+- [Phase 05-setup-tooling]: Plan 05-06: duplicate-id validation emits one error per offending pin (not per collision) so the UI highlights every member of the collision group (D-15 'for EACH duplicate pin')
+- [Phase 05-setup-tooling]: Plan 05-06: byte-equivalence fixture pattern — read ground-truth file, reverse into DraftPin[], rebuild via the production pipeline, assert strict equality with actionable line-level diff on failure
 
 ### Pending Todos
 
@@ -117,6 +121,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-17T22:10:45.818Z
-Stopped at: Completed 05-05-PLAN.md (awaiting UAT on Task 4 checkpoint)
+Last session: 2026-04-17T22:28:46.636Z
+Stopped at: Completed 05-06-PLAN.md (Approve + byte-equivalent export, TOOL-02 contract proven)
 Resume file: None

@@ -38,7 +38,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 ### Setup Tooling
 
 - [x] **TOOL-01**: Admin can upload a floor plan image and click on each table position to generate coordinate mappings
-- [ ] **TOOL-02**: Click-to-place editor exports percentage-based coordinates compatible with the app's floorPlan config
+- [x] **TOOL-02**: Click-to-place editor exports percentage-based coordinates compatible with the app's floorPlan config
 - [x] **TOOL-03**: Setup tool is excluded from the production guest-facing bundle (dev-only or separate route)
 - [x] **TOOL-04**: Auto-detect table positions from floor plan image via computer vision (promoted from v2 into Phase 5 scope; see .planning/phases/05-setup-tooling/05-CONTEXT.md)
 
@@ -95,7 +95,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PERF-03 | Phase 4 | Complete |
 | PERF-04 | Phase 4 | Complete |
 | TOOL-01 | Phase 5 | Complete |
-| TOOL-02 | Phase 5 | Pending |
+| TOOL-02 | Phase 5 | Complete |
 | TOOL-03 | Phase 5 | Complete |
 | TOOL-04 | Phase 5 | Complete |
 
