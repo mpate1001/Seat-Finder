@@ -16,10 +16,10 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Map Experience
 
-- [ ] **MAP-01**: Floor plan animates with smooth pan + zoom to center on the guest's assigned table when selected
-- [ ] **MAP-02**: Guest can pinch-to-zoom and pan the floor plan on mobile devices
+- [x] **MAP-01**: Floor plan animates with smooth pan + zoom to center on the guest's assigned table when selected
+- [x] **MAP-02**: Guest can pinch-to-zoom and pan the floor plan on mobile devices
 - [ ] **MAP-03**: Table markers are larger and higher-contrast with visible table number labels
-- [ ] **MAP-04**: Animated zoom works correctly on iOS Safari without scroll bleed-through
+- [x] **MAP-04**: Animated zoom works correctly on iOS Safari without scroll bleed-through
 - [x] **MAP-05**: Floor plan image is optimized for mobile (compressed, appropriate resolution)
 
 ### Data Integrity
@@ -85,10 +85,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SRCH-02 | Phase 2 | Pending |
 | SRCH-03 | Phase 2 | Pending |
 | SRCH-04 | Phase 2 | Pending |
-| MAP-01 | Phase 3 | Pending |
-| MAP-02 | Phase 3 | Pending |
+| MAP-01 | Phase 3 | Complete |
+| MAP-02 | Phase 3 | Complete |
 | MAP-03 | Phase 3 | Pending |
-| MAP-04 | Phase 3 | Pending |
+| MAP-04 | Phase 3 | Complete |
 | MAP-05 | Phase 3 | Complete |
 | PERF-01 | Phase 4 | Pending |
 | PERF-02 | Phase 4 | Pending |

@@ -60,7 +60,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 5 plans
 - [x] 03-01-PLAN.md — Install test + runtime deps (vitest, sharp, react-zoom-pan-pinch); create vitest config + test stubs (foundation for all Phase 3 plans)
 - [x] 03-02-PLAN.md — Write scripts/generate-images.mjs and emit 9 committed image variants to public/floor-plan/ (MAP-05)
-- [ ] 03-03-PLAN.md — Create MapView.tsx + MapView.css: full-screen overlay, TransformWrapper, 250ms/700ms zoom sequence, Escape + popstate dismissal (MAP-01, MAP-02, MAP-04)
+- [x] 03-03-PLAN.md — Create MapView.tsx + MapView.css: full-screen overlay, TransformWrapper, 250ms/700ms zoom sequence, Escape + popstate dismissal (MAP-01, MAP-02, MAP-04)
 - [ ] 03-04-PLAN.md — Refactor FloorPlan.tsx + FloorPlan.css: <picture> srcset, percentage markers, pin-assigned teardrop + pin-dot + adaptive labels (MAP-03, MAP-05)
 - [ ] 03-05-PLAN.md — Wire MapView into App.tsx, add preload link + hidden img, delete TableModal, author tests, run full vitest/lint/build gate (MAP-01..MAP-05)
 **UI hint**: yes
