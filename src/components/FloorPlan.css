@@ -39,7 +39,10 @@
   position: absolute;
   width: 44px;
   height: 44px;
-  transform: translate(-50%, -100%); /* bottom tip anchors on the coordinate */
+  /* Shift the pin upward 16px so the tip sits on the TOP EDGE of the table
+     circle, pointing down — keeps the table number on the image fully
+     visible instead of being covered by the teardrop. */
+  transform: translate(-50%, calc(-100% - 16px));
   pointer-events: none;              /* D-12 — visual only this phase */
   z-index: 10;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
@@ -70,11 +73,17 @@
 
 .pin-pulse-ring {
   position: absolute;
+  /* Center the ring over the teardrop head using margin-negatives rather
+     than transform: translate. The pinPulse keyframe applies
+     transform: scale(...), which OVERRIDES any translate-based centering
+     and drifts the ring off-axis (the classic "offset ring" bug). Using
+     margin avoids the conflict. */
   left: 50%;
-  top: 4px; /* over the teardrop head */
-  transform: translate(-50%, 0);
-  width: 28px;
-  height: 28px;
+  top: 18px;           /* center of the teardrop head (viewBox y≈18) */
+  width: 44px;
+  height: 44px;
+  margin-left: -22px;  /* half width — hard centering immune to transform */
+  margin-top: -22px;   /* half height */
   border-radius: 50%;
   background: #d90429;
   /* pinPulse keyframe is defined in MapView.css — overall animation orchestration
