@@ -305,9 +305,68 @@
   transition: background 0.15s ease;
 }
 
+.setup-approve-button:hover:not(:disabled) {
+  background: #1f2132;
+}
+
 .setup-approve-button:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+/* ===== Validation error banner (D-15) — shown above the review canvas
+   when Approve fails so the admin can click into each offending pin. */
+
+.setup-validation-errors {
+  background: #fff5f5;
+  border: 1px solid #ef233c;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #5d1a24;
+}
+
+.setup-validation-errors-headline {
+  margin: 0 0 8px;
+  color: #d90429;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.setup-validation-errors-list {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.setup-validation-errors-kind {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #ef233c;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.setup-validation-errors-link {
+  background: none;
+  border: none;
+  color: #d90429;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.setup-validation-errors-link:hover {
+  color: #8b021e;
 }
 
 .setup-loading {

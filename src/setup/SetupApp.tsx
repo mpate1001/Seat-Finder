@@ -3,35 +3,34 @@ import './SetupApp.css';
 import FileDrop from './FileDrop';
 import ReviewCanvas from './ReviewCanvas';
 import LivePreview from './LivePreview';
+import ExportPanel from './ExportPanel';
 import { runDetectionPipeline } from './pipeline';
+import { validateDraftPins, type ValidationError } from './validation';
 import type { DraftPin, PipelineProgress } from './types';
 
 /**
- * SetupApp — the floor-plan admin root (TOOL-01 + TOOL-04 wiring).
+ * SetupApp — the floor-plan admin root (TOOL-01 + TOOL-02 + TOOL-04 wiring).
  *
- * Flow: upload → click Detect → pipeline runs → review pane (drag / edit /
- * delete / add) + live-preview pane (real <FloorPlan/>) update in sync.
- * Approve + export is plan 05-06; Approve button is visible but disabled
- * here to signal the upcoming gate.
+ * Flow:
+ *   upload → Detect → review (drag / edit / delete / add) → Approve → approved
  *
- * StrictMode discipline (Pitfall 3): `runDetectionPipeline` is invoked ONLY
- * from inside the Detect button's onClick handler — never in a useEffect —
- * so the StrictMode double-mount cannot spawn a duplicate worker or WASM
- * init. The module-level cvPromise singleton inside detect.ts provides
- * belt-and-suspenders for any later caller that does not follow this rule.
+ * `mode`:
+ *   - 'idle'      → no image yet OR image loaded but Detect not yet clicked
+ *   - 'detecting' → pipeline running (buttons disabled)
+ *   - 'review'    → draft pins rendered; admin can edit + Approve
+ *   - 'approved'  → ReviewCanvas locked (disabled=true); ExportPanel rendered
+ *                   alongside the LivePreview so the admin can still see the
+ *                   final layout while downloading.
  *
- * Single-flight discipline (Pitfall 2): the Detect button is disabled while
- * `mode === 'detecting'`. A second click cannot start a second pipeline.
+ * Approve handler (D-15): runs validateDraftPins. On failure → stays in review
+ * with the error list rendered inline above the canvas. On success → mode
+ * flips to 'approved' and ExportPanel replaces the Approve/Start-over row.
  *
- * Blob-URL lifecycle (Pitfall 7): the uploaded image's object URL is owned
- * by SetupApp. A useEffect cleanup revokes the previous URL when the
- * uploaded image changes, and on unmount — no leaked blob handles.
- *
- * D-04: route-obscurity warning stays visible in the card header at all
- * times (from plan 05-01) — DO NOT share this URL.
+ * StrictMode / single-flight / blob-URL lifecycle notes preserved from plan
+ * 05-05 — see the prior SetupApp.tsx comments for the detailed rationale.
  */
 
-type SetupMode = 'idle' | 'detecting' | 'review';
+type SetupMode = 'idle' | 'detecting' | 'review' | 'approved';
 
 export default function SetupApp(): JSX.Element {
   const [uploadedBitmap, setUploadedBitmap] = useState<ImageBitmap | null>(null);
@@ -42,6 +41,9 @@ export default function SetupApp(): JSX.Element {
   const [status, setStatus] = useState<PipelineProgress | null>(null);
   const [mode, setMode] = useState<SetupMode>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>(
+    [],
+  );
 
   // Revoke the previous object URL whenever it's replaced or the component
   // unmounts. The cleanup captures the URL value at the time the effect ran,
@@ -53,6 +55,14 @@ export default function SetupApp(): JSX.Element {
       URL.revokeObjectURL(url);
     };
   }, [uploadedImageUrl]);
+
+  // Clear the validation error banner whenever the pins change — once the
+  // admin starts correcting issues, the old error list becomes misleading.
+  // The Approve button re-runs validation on the next click so nothing is
+  // lost.
+  useEffect(() => {
+    setValidationErrors([]);
+  }, [draftPins]);
 
   // Pin-status counts for the summary bar — cheap derived state.
   const pinStatusCounts = useMemo(() => {
@@ -88,6 +98,7 @@ export default function SetupApp(): JSX.Element {
     setStatus(null);
     setMode('idle');
     setError(null);
+    setValidationErrors([]);
   }
 
   function handleUploadError(message: string): void {
@@ -124,6 +135,36 @@ export default function SetupApp(): JSX.Element {
     setStatus(null);
     setMode('idle');
     setError(null);
+    setValidationErrors([]);
+  }
+
+  function handleApprove(): void {
+    const result = validateDraftPins(draftPins);
+    if (!result.ok) {
+      setValidationErrors(result.errors);
+      return; // stay in review
+    }
+    setValidationErrors([]);
+    setMode('approved');
+  }
+
+  function handleBackToEdit(): void {
+    setValidationErrors([]);
+    setMode('review');
+  }
+
+  function handleEditPin(pinId: string): void {
+    setSelectedPinId(pinId);
+    // Scroll the pin into view so the admin can see what they're fixing.
+    // We defer to next tick so any re-render from setSelectedPinId has landed.
+    setTimeout(() => {
+      const pinEl = document.querySelector(
+        `[data-pin-id="${pinId}"]`,
+      ) as HTMLElement | null;
+      if (pinEl && typeof pinEl.scrollIntoView === 'function') {
+        pinEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 0);
   }
 
   // Status line text — the OCR stage prints "(done/total)" so long runs show
@@ -136,6 +177,9 @@ export default function SetupApp(): JSX.Element {
         : status.message;
 
   const hasUpload = uploadedBitmap !== null && uploadedImageUrl !== null;
+  const canApprove = draftPins.length > 0;
+  const isApproved = mode === 'approved';
+  const isReviewing = mode === 'review' || mode === 'approved';
 
   return (
     <main className="setup-app">
@@ -162,7 +206,7 @@ export default function SetupApp(): JSX.Element {
           <FileDrop onImageReady={handleImageReady} onError={handleUploadError} />
         )}
 
-        {hasUpload && mode !== 'review' && (
+        {hasUpload && !isReviewing && (
           <div className="setup-preflight">
             <p className="setup-preflight-filename">
               <strong>Loaded:</strong> {uploadedFileName} (
@@ -194,13 +238,16 @@ export default function SetupApp(): JSX.Element {
           </div>
         )}
 
-        {hasUpload && mode === 'review' && uploadedImageUrl !== null && (
+        {hasUpload && isReviewing && uploadedImageUrl !== null && (
           <div className="setup-review">
             <div className="setup-review-summary">
               <p className="setup-review-summary-headline">
-                Found <strong>{draftPins.length}</strong> table
-                {draftPins.length === 1 ? '' : 's'}. Review, correct, then
-                approve below.
+                {isApproved ? 'Approved layout' : 'Found'}{' '}
+                <strong>{draftPins.length}</strong> table
+                {draftPins.length === 1 ? '' : 's'}.
+                {isApproved
+                  ? ' Download the JSON below — edits are locked.'
+                  : ' Review, correct, then approve below.'}
               </p>
               <p className="setup-review-summary-counts">
                 <span className="setup-count setup-count--ok">
@@ -215,9 +262,39 @@ export default function SetupApp(): JSX.Element {
               </p>
             </div>
 
+            {validationErrors.length > 0 && !isApproved && (
+              <div className="setup-validation-errors" role="alert">
+                <p className="setup-validation-errors-headline">
+                  <strong>
+                    Can&apos;t approve yet — {validationErrors.length} issue
+                    {validationErrors.length === 1 ? '' : 's'} to fix:
+                  </strong>
+                </p>
+                <ul className="setup-validation-errors-list">
+                  {validationErrors.map((err, idx) => (
+                    <li key={`${err.kind}:${err.pinId}:${idx}`}>
+                      <span className="setup-validation-errors-kind">
+                        {err.kind}
+                      </span>{' '}
+                      — {err.detail}{' '}
+                      <button
+                        type="button"
+                        className="setup-validation-errors-link"
+                        onClick={() => handleEditPin(err.pinId)}
+                      >
+                        Edit pin
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <div className="setup-review-grid">
               <div className="setup-review-pane">
-                <h2 className="setup-pane-title">Review</h2>
+                <h2 className="setup-pane-title">
+                  {isApproved ? 'Approved (locked)' : 'Review'}
+                </h2>
                 <ReviewCanvas
                   imageUrl={uploadedImageUrl}
                   imageNaturalWidth={uploadedBitmap?.width ?? 1}
@@ -226,6 +303,7 @@ export default function SetupApp(): JSX.Element {
                   selectedPinId={selectedPinId}
                   onChange={setDraftPins}
                   onSelect={setSelectedPinId}
+                  disabled={isApproved}
                 />
               </div>
               <div className="setup-review-pane">
@@ -239,24 +317,36 @@ export default function SetupApp(): JSX.Element {
               </div>
             </div>
 
-            <div className="setup-review-actions">
-              <button
-                type="button"
-                className="setup-approve-button"
-                disabled
-                aria-disabled="true"
-                title="Approve + export lands in the next plan"
-              >
-                Approve + export (coming in next plan)
-              </button>
-              <button
-                type="button"
-                className="setup-reupload-button"
-                onClick={handleReupload}
-              >
-                Start over
-              </button>
-            </div>
+            {isApproved ? (
+              <ExportPanel
+                pins={draftPins}
+                imageFileName={uploadedFileName ?? 'floor-plan.png'}
+                onBack={handleBackToEdit}
+              />
+            ) : (
+              <div className="setup-review-actions">
+                <button
+                  type="button"
+                  className="setup-approve-button"
+                  onClick={handleApprove}
+                  disabled={!canApprove}
+                  title={
+                    canApprove
+                      ? 'Validate pins, then lock + export'
+                      : 'Add at least one pin before approving'
+                  }
+                >
+                  Approve + export
+                </button>
+                <button
+                  type="button"
+                  className="setup-reupload-button"
+                  onClick={handleReupload}
+                >
+                  Start over
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
