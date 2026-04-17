@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-01-PLAN.md (route-split guest / setup with React.lazy scaffold — TOOL-03 proven by separate dist/assets/SetupApp chunk)
-last_updated: "2026-04-17T21:12:28.592Z"
+stopped_at: Completed 05-04-PLAN.md (detection pipeline — HoughCircles + Tesseract OCR + DraftPin emission; TOOL-01 + TOOL-04 algorithm layer)
+last_updated: "2026-04-17T21:53:58.509Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 24
-  completed_plans: 17
-  percent: 71
+  completed_plans: 20
+  percent: 83
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-12)
 ## Current Position
 
 Phase: 05 (setup-tooling) — EXECUTING
-Plan: 2 of 7
+Plan: 5 of 7
 Status: Ready to execute
 Last activity: 2026-04-17
 
-Progress: [██░░░░░░░░] 20%
+Progress: [████████░░] 83%
 
 ## Performance Metrics
 
@@ -62,6 +62,7 @@ Progress: [██░░░░░░░░] 20%
 | Phase 04-performance-offline P05 | ~5min | 3 tasks | 11 files |
 | Phase 04 P06 | 3min | 3 tasks | 5 files |
 | Phase 05-setup-tooling P01 | 5min | 3 tasks | 9 files |
+| Phase 05-setup-tooling P04 | 10min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,10 @@ Recent decisions affecting current work:
 - [Phase 05-setup-tooling]: Plan 05-01: lazy(() => import('./setup/SetupApp')) in Root.tsx is the SINGLE allowed guest->setup graph edge (D-01); all of 05-02..05-06 live inside src/setup/
 - [Phase 05-setup-tooling]: Plan 05-01: tsconfig.json types[] += 'node' to support node:fs/node:path/__dirname in src/main.test.tsx without a separate tsconfig.test.json (@types/node already devDep)
 - [Phase 05-setup-tooling]: Plan 05-01: .claude/** added to both eslint.config.js ignores and vitest.config.ts test.exclude — stale agent-worktree copies with nested node_modules break both tools
+- [Phase 05-setup-tooling]: Plan 05-04: Tesseract v7 ImageLike rejects raw ImageData — wrap each crop in an OffscreenCanvas via putImageData before recognize(); cheapest valid shape, one canvas per crop is trivial vs recognize() cost
+- [Phase 05-setup-tooling]: Plan 05-04: runDetectionPipeline does NOT close the source bitmap — caller (SetupApp, plan 05-05) owns the ImageBitmap lifecycle so the source image remains visible under the pin-review overlay
+- [Phase 05-setup-tooling]: Plan 05-04: OffscreenCanvas polyfill added to src/test/setup.ts (jsdom gap) — minimal shape with putImageData no-op; sufficient because ocr.test.ts mocks Tesseract so the fake worker never reads canvas pixels
+- [Phase 05-setup-tooling]: Plan 05-04: belt-and-suspenders /[^0-9]/g digit strip inside pipeline.ts AFTER the Tesseract whitelist — whitelist leaks have been seen in v7 edge cases (trailing punct); free defense
 
 ### Pending Todos
 
@@ -111,6 +116,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-17T21:12:28.588Z
-Stopped at: Completed 05-01-PLAN.md (route-split guest / setup with React.lazy scaffold — TOOL-03 proven by separate dist/assets/SetupApp chunk)
+Last session: 2026-04-17T21:53:58.505Z
+Stopped at: Completed 05-04-PLAN.md (detection pipeline — HoughCircles + Tesseract OCR + DraftPin emission; TOOL-01 + TOOL-04 algorithm layer)
 Resume file: None
