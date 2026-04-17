@@ -1,0 +1,98 @@
+/*
+ * Setup-tool shell styles. Scoped under the `.setup-` prefix so they cannot
+ * accidentally collide with the guest app's `.app-`, `.card`, `.floor-plan-`,
+ * or `.map-view-` families (CLAUDE.md convention). The setup tool is utility,
+ * not ceremony — we intentionally DO NOT reuse the wedding background image
+ * from App.tsx. A plain Seat-Finder slate background keeps the admin surface
+ * visually distinct from the guest flow.
+ */
+
+.setup-app {
+  min-height: 100vh;
+  width: 100%;
+  background: #edf2f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.setup-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 40px 30px;
+  box-shadow: 0 10px 30px rgba(43, 45, 66, 0.12);
+  width: 100%;
+  max-width: 520px;
+  border: 1px solid rgba(141, 153, 174, 0.25);
+}
+
+.setup-card h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2b2d42;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.setup-subtitle {
+  font-size: 0.95rem;
+  color: #8d99ae;
+  text-align: center;
+  margin-bottom: 28px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.setup-upload-button {
+  display: block;
+  width: 100%;
+  padding: 15px;
+  background: #ef233c;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.setup-upload-button:hover:not(:disabled) {
+  background: #d90429;
+}
+
+.setup-upload-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.setup-help {
+  margin-top: 20px;
+  color: #2b2d42;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.setup-loading {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #edf2f4;
+  color: #2b2d42;
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+@media (max-width: 600px) {
+  .setup-card {
+    padding: 28px 20px;
+  }
+
+  .setup-card h1 {
+    font-size: 1.7rem;
+  }
+}
