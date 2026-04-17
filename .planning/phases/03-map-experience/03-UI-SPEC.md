@@ -51,19 +51,22 @@ Declared values (all multiples of 4):
 
 ## Typography
 
+Exactly **2 font weights** declared: 400 (regular body) + 700 (bold for everything emphatic).
+
 | Role | Size | Weight | Line Height | Used for |
 |------|------|--------|-------------|----------|
 | Body | 14px | 400 | 1.5 | Overlay card description (`{guest.description}`) |
-| Label | 12px | 600 | 1.0 | Neighbor table number labels (adaptive, fade in at ≥ 1.8×) |
-| Heading | 16px | 600 | 1.3 | Overlay card greeting line (`Welcome, {firstName}! — Table {N}`) |
+| Label | 12px | 700 | 1.0 | Neighbor table number labels (adaptive, fade in at ≥ 1.8×) |
+| Heading | 16px | 700 | 1.3 | Overlay card greeting line (`Welcome, {firstName}! — Table {N}`) |
 | Display | 14px | 700 | 1.0 | Number inside the assigned red pin (white, centered) |
 
 **Mobile (`max-width: 600px`)** — same scale; the system font's optical sizes already render well at these px values, no breakpoint shrinking needed.
 
 **Why these choices:**
+- Hierarchy between greeting (16px), description (14px), pin number (14px white on red), and neighbor labels (12px) is achieved through **size and color**, not weight — so the contract collapses cleanly to two weights (400 body + 700 emphatic).
 - Overlay must be **non-intrusive** (D-02), so the heading is 16px not 1.8rem like the old TableModal greeting. The map is the hero.
 - Pin number (Display 14px @ 700) must read at a glance against the red fill — bold + tight line-height.
-- Neighbor labels (12px @ 600) are intentionally small so they don't compete with the assigned pin's number.
+- Neighbor labels (12px @ 700) are intentionally small so they don't compete with the assigned pin's number; weight 700 keeps them legible at the small size against a busy floor plan.
 
 ---
 
@@ -85,7 +88,7 @@ Declared values (all multiples of 4):
 **Why 60/30/10 maps this way:** The floor plan image IS the dominant surface — a guest spends most of their time looking at it. The overlay card is the secondary surface (top of viewport, ~10–15% of screen height). The single red pin is the accent — it pops because nothing else competes. 53 muted slate dots recede into the floor plan.
 
 **Overlay card text colors:**
-- Greeting line: `#ffffff` on `rgba(43, 45, 66, 0.9)` — passes WCAG AA at 16px/600 `[discretion]`
+- Greeting line: `#ffffff` on `rgba(43, 45, 66, 0.9)` — passes WCAG AA at 16px/700 `[discretion]`
 - Description line: `#edf2f4` (light gray) on same background — slightly de-emphasized to keep the greeting primary `[discretion]`
 
 **Close button:**
@@ -150,7 +153,7 @@ This section is non-template — added because Phase 3 introduces several new vi
 | Drop shadow | none (intentionally flat — they recede) |
 | Tap target | 44×44px transparent hitbox around the 12px visual `[CONTEXT D-11]` (footprint, not visual size) |
 | Label visibility | Hidden by default; fades in when `transformState.scale ≥ 1.8` `[discretion within D-09]` |
-| Label style | 12px, weight 600, color `#2b2d42`, white outline (`text-shadow: 0 0 3px #fff, 0 0 3px #fff`) for legibility over floor plan, positioned 16px below the dot center |
+| Label style | 12px, weight 700, color `#2b2d42`, white outline (`text-shadow: 0 0 3px #fff, 0 0 3px #fff`) for legibility over floor plan, positioned 16px below the dot center |
 | Pointer events | `pointer-events: none` `[CONTEXT D-12 — markers are visual only this phase]` |
 
 ### Overlay card (top-pinned)
