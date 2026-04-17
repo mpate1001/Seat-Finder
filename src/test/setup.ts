@@ -41,3 +41,17 @@ if (typeof globalThis.OffscreenCanvas === 'undefined') {
   }
   (globalThis as unknown as { OffscreenCanvas: unknown }).OffscreenCanvas = OffscreenCanvasPolyfill;
 }
+
+// jsdom does not implement ResizeObserver (used by react-zoom-pan-pinch to
+// track viewport size). LivePreview renders a real <TransformWrapper/> in
+// its test, which invokes `new ResizeObserver(...)` during mount. A stub
+// observer that never fires observations is sufficient — none of the
+// review-UI tests assert on viewport-resize behavior.
+if (typeof globalThis.ResizeObserver === 'undefined') {
+  class ResizeObserverPolyfill {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+  }
+  (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = ResizeObserverPolyfill;
+}
