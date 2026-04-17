@@ -20,7 +20,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [ ] **MAP-02**: Guest can pinch-to-zoom and pan the floor plan on mobile devices
 - [ ] **MAP-03**: Table markers are larger and higher-contrast with visible table number labels
 - [ ] **MAP-04**: Animated zoom works correctly on iOS Safari without scroll bleed-through
-- [ ] **MAP-05**: Floor plan image is optimized for mobile (compressed, appropriate resolution)
+- [x] **MAP-05**: Floor plan image is optimized for mobile (compressed, appropriate resolution)
 
 ### Data Integrity
 
@@ -89,7 +89,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MAP-02 | Phase 3 | Pending |
 | MAP-03 | Phase 3 | Pending |
 | MAP-04 | Phase 3 | Pending |
-| MAP-05 | Phase 3 | Pending |
+| MAP-05 | Phase 3 | Complete |
 | PERF-01 | Phase 4 | Pending |
 | PERF-02 | Phase 4 | Pending |
 | PERF-03 | Phase 4 | Pending |
