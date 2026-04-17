@@ -126,11 +126,13 @@ describe('<App /> cache integration', () => {
       expect(screen.queryByText(/Loading guest list/)).toBeNull();
     });
     expect(screen.getByText(/Welcome!/)).toBeInTheDocument();
+    // fetchedAt state is now consumed by <StalenessBadge /> (plan 04-04). The
+    // badge renders silently when online + cache <1h, so we assert the happy
+    // path by confirming the cache wrapper was invoked with SHEET_URL and
+    // that the data-fetched-at shim is gone.
     expect(fetchGuestsCachedMock).toHaveBeenCalledWith('https://example.test/csv');
-    // fetchedAt is threaded into the card via data-fetched-at attribute.
-    // Plan 04-04 will replace this with a proper <StalenessBadge /> element.
-    expect(document.querySelector('.card')?.getAttribute('data-fetched-at')).toBe(
-      '2026-04-17T11:00:00.000Z',
+    expect(document.querySelector('.card')?.hasAttribute('data-fetched-at')).toBe(
+      false,
     );
   });
 

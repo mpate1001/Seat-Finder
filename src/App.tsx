@@ -6,6 +6,7 @@ import { buildGuestIndex, searchGuests, type RankedGuest } from './services/sear
 import SearchForm from './components/SearchForm';
 import GuestDropdown from './components/GuestDropdown';
 import MapView from './components/MapView';
+import StalenessBadge from './components/StalenessBadge';
 import backgroundImage from './assets/mahsompw-6074Z70_6074.jpeg';
 import './App.css';
 
@@ -16,8 +17,10 @@ function App() {
   const [searchResults, setSearchResults] = useState<RankedGuest[]>([]);
   const [query, setQuery] = useState('');
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
-  // fetchedAt drives plan 04-04's StalenessBadge. Threaded through the .card
-  // data-fetched-at attribute below for now so plan 04-04 tests can read it.
+  // fetchedAt drives plan 04-04's StalenessBadge (rendered inside the .card
+  // below). The badge is silent when online + cache is <1h old, shows
+  // "Updated Xm ago" when >=1h, and "Offline — showing cached list" when
+  // navigator.onLine === false. Tapping it reinvokes loadGuests.
   const [fetchedAt, setFetchedAt] = useState<string | null>(null);
 
   const fuse = useMemo(() => buildGuestIndex(guests), [guests]);
@@ -103,12 +106,13 @@ function App() {
 
   return (
     <div className="app-container" style={{ backgroundImage: `url(${backgroundImage})` }}>
-      <div className="card" data-fetched-at={fetchedAt ?? ''}>
+      <div className="card">
         <h1 className="title">Seat Finder</h1>
         <p className="subtitle">Mahek & Saumya's Wedding</p>
         <p className="subtitle">May 24th 2026</p>
         <p className="subtitle">#MikeMetSaumOne</p>
         <p className="welcome-text">Welcome! Please enter your name to find your table.</p>
+        <StalenessBadge fetchedAt={fetchedAt} onRefresh={loadGuests} />
 
         <SearchForm onSearch={handleSearch} />
 
