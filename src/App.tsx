@@ -7,6 +7,7 @@ import SearchForm from './components/SearchForm';
 import GuestDropdown from './components/GuestDropdown';
 import MapView from './components/MapView';
 import StalenessBadge from './components/StalenessBadge';
+import UpdateToast from './components/UpdateToast';
 import backgroundImage from './assets/mahsompw-6074Z70_6074.jpeg';
 import './App.css';
 
@@ -138,6 +139,7 @@ function App() {
         aria-hidden="true"
         alt=""
       />
+      <UpdateToast suppressed={selectedGuest !== null} />
     </div>
   );
 }
