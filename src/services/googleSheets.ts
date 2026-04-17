@@ -1,7 +1,18 @@
 import { Guest } from '../types';
 
-const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT2CjdXZd0XrE_Q9_BoNWhIqr69ElM60e7CgVvYSWIVA4QRs8CtVV-3UWqWaco9jk9iestkouEd_7en/pub?output=csv';
+// -- Env var (PERF-04, D-17/D-18) ---------------------------------------------
+// Module-load-time guard. Throws immediately if VITE_SHEET_URL is missing, so
+// downstream code never sees an undefined URL. Build-time enforcement also lives
+// in vite.config.ts (requireSheetUrl plugin) to fail CI before the bundle ships.
+export const SHEET_URL: string = import.meta.env.VITE_SHEET_URL;
 
+if (!SHEET_URL) {
+  throw new Error(
+    'VITE_SHEET_URL is not set. Copy .env.example to .env.local and set the Sheets CSV URL.'
+  );
+}
+
+// -- CSV column mapping -------------------------------------------------------
 const HEADER_MAP: Record<keyof Guest, string> = {
   tableNumber: 'table number',
   firstName: 'first name',
@@ -10,6 +21,60 @@ const HEADER_MAP: Record<keyof Guest, string> = {
   description: 'guest description',
 };
 
+// -- Public API ---------------------------------------------------------------
+
+/**
+ * Parse a raw CSV string into Guest[]. Header-indexed (not positional) so the
+ * source sheet can reorder columns without breaking the app.
+ *
+ * Throws Error with a user-friendly message if:
+ *   - The CSV is empty
+ *   - Any required column header is missing
+ */
+export function parseGuestsCsv(csvText: string): Guest[] {
+  const lines = csvText.split('\n');
+  if (lines.length === 0 || !lines[0].trim()) {
+    throw new Error('Guest list is empty');
+  }
+
+  const headerIndex = buildHeaderIndex(lines[0]);
+
+  const idx: Record<keyof Guest, number | undefined> = {
+    tableNumber: headerIndex[HEADER_MAP.tableNumber],
+    firstName: headerIndex[HEADER_MAP.firstName],
+    lastName: headerIndex[HEADER_MAP.lastName],
+    contactInfo: headerIndex[HEADER_MAP.contactInfo],
+    description: headerIndex[HEADER_MAP.description],
+  };
+
+  const missing = (Object.keys(idx) as (keyof Guest)[]).filter((k) => idx[k] === undefined);
+  if (missing.length > 0) {
+    throw new Error(`Guest list is missing required column(s): ${missing.join(', ')}`);
+  }
+
+  const guests: Guest[] = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const fields = parseCSVLine(line);
+    guests.push({
+      tableNumber: (fields[idx.tableNumber!] ?? '').trim(),
+      firstName: (fields[idx.firstName!] ?? '').trim(),
+      lastName: (fields[idx.lastName!] ?? '').trim(),
+      contactInfo: (fields[idx.contactInfo!] ?? '').trim(),
+      description: (fields[idx.description!] ?? '').trim(),
+    });
+  }
+
+  return guests;
+}
+
+/**
+ * Fetch the published Google Sheets CSV and parse it.
+ * Preserves the existing user-facing error surface (try/catch + re-throw).
+ * Network-first caching lives in guestsCache.ts (plan 04-02), NOT here --
+ * this function remains the unwrapped "always hit the network" path.
+ */
 export async function fetchGuests(): Promise<Guest[]> {
   try {
     const response = await fetch(SHEET_URL);
@@ -19,48 +84,14 @@ export async function fetchGuests(): Promise<Guest[]> {
     }
 
     const csvText = await response.text();
-
-    const lines = csvText.split('\n');
-    if (lines.length === 0 || !lines[0].trim()) {
-      throw new Error('Guest list is empty');
-    }
-
-    const headerIndex = buildHeaderIndex(lines[0]);
-
-    const idx: Record<keyof Guest, number | undefined> = {
-      tableNumber: headerIndex[HEADER_MAP.tableNumber],
-      firstName: headerIndex[HEADER_MAP.firstName],
-      lastName: headerIndex[HEADER_MAP.lastName],
-      contactInfo: headerIndex[HEADER_MAP.contactInfo],
-      description: headerIndex[HEADER_MAP.description],
-    };
-
-    const missing = (Object.keys(idx) as (keyof Guest)[])
-      .filter((k) => idx[k] === undefined);
-    if (missing.length > 0) {
-      throw new Error(`Guest list is missing required column(s): ${missing.join(', ')}`);
-    }
-
-    const guests: Guest[] = [];
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-      const fields = parseCSVLine(line);
-      guests.push({
-        tableNumber: (fields[idx.tableNumber!] ?? '').trim(),
-        firstName: (fields[idx.firstName!] ?? '').trim(),
-        lastName: (fields[idx.lastName!] ?? '').trim(),
-        contactInfo: (fields[idx.contactInfo!] ?? '').trim(),
-        description: (fields[idx.description!] ?? '').trim(),
-      });
-    }
-
-    return guests;
+    return parseGuestsCsv(csvText);
   } catch (error) {
     console.error('Error fetching guest data:', error);
     throw new Error('Failed to load guest list. Please try again.');
   }
 }
+
+// -- Internals ----------------------------------------------------------------
 
 function parseCSVLine(line: string): string[] {
   const result: string[] = [];

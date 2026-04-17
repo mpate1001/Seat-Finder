@@ -2,6 +2,17 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Guest } from '../types';
 import { parseGuestsCsv } from './googleSheets';
 
+type GuardModule = typeof import('./googleSheets');
+
+// Cache-bust dynamic import helper: appending a unique query string forces
+// Vitest to re-evaluate the module so the module-load guard fires per test.
+// TypeScript cannot resolve query-suffixed specifiers statically, so we build
+// the path at runtime and cast the dynamic import's inferred shape.
+function freshImport(tag: string): Promise<GuardModule> {
+  const spec = `./googleSheets?${tag}`;
+  return import(/* @vite-ignore */ spec) as Promise<GuardModule>;
+}
+
 const HEADER_LINE =
   'Table Number,First Name,Last Name,Contact Info,Guest Description';
 
@@ -55,7 +66,7 @@ describe('module load guard', () => {
 
   it('throws when VITE_SHEET_URL is empty string', async () => {
     vi.stubEnv('VITE_SHEET_URL', '');
-    await expect(import('./googleSheets?guard-empty')).rejects.toThrow(
+    await expect(freshImport('guard-empty')).rejects.toThrow(
       /VITE_SHEET_URL is not set/
     );
   });
@@ -63,7 +74,7 @@ describe('module load guard', () => {
   it('loads successfully when VITE_SHEET_URL is set', async () => {
     // Sanity -- in the normal test env (.env.local), the import should not throw.
     expect(originalEnv).toBeTruthy();
-    const mod = await import('./googleSheets?guard-ok');
+    const mod = await freshImport('guard-ok');
     expect(mod.SHEET_URL).toBe(originalEnv);
   });
 });
