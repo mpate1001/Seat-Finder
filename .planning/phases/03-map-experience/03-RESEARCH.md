@@ -780,22 +780,25 @@ No security hardening tasks needed for this phase beyond the existing CSP/header
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Image quality tuning**
    - What we know: Source PNG is 3300×2517 at 1.5MB. AVIF quality=50 is typical for floor-plan-style graphics (mostly flat color, text, lines).
    - What's unclear: Actual encoded file sizes; whether text labels on the floor plan remain readable at quality=50 AVIF.
    - Recommendation: Run `scripts/generate-images.mjs` in Wave 0, visually inspect the 900w AVIF on a phone screen, and tune quality upward if text is illegible. Target 30-80KB for the 900w AVIF.
+   - **Resolution:** Deferred to UAT step 17 (iPhone visual check of 900w AVIF legibility). If text is illegible, tune `quality` upward in `scripts/generate-images.mjs` and regenerate. Not blocking plan execution — plans produce quality=50 as the initial value, UAT validates or flags for retune.
 
 2. **`minScale` value for fit-to-viewport**
    - What we know: `centerOnInit: true` centers content. `minScale` of 0.3 prevents zooming out too far. The correct "fit-to-viewport" initial scale depends on the image aspect ratio vs viewport size.
    - What's unclear: Whether `centerOnInit` also auto-scales to fit, or just centers at `initialScale: 1`.
    - Recommendation: Test in browser. If `initialScale: 1` shows the full image overflowing on a phone, reduce `initialScale` or use `centerZoomedOut: true`. Planner should keep this as a runtime-tunable value.
+   - **Resolution:** UI-SPEC Map Surface table locks `minScale: 1.0` with rationale "Min = fit-to-viewport". Plans adopt `minScale: 1.0`. Previous RESEARCH.md example values (0.3 / 0.5) are superseded — UI-SPEC is authoritative.
 
 3. **Guest switch while map is open (D-08 carry-forward)**
    - What we know: UI-SPEC specifies "re-runs the overview-hold-zoom-in sequence for the new pin" when a new guest is selected while map is open.
    - What's unclear: Whether this requires unmount+remount of MapView (using `key={guest.tableNumber}` on the component) or an imperative `resetTransform()` → `zoomToElement()` sequence.
    - Recommendation: Use `key={guest.tableNumber}` on `<MapView>` in App.tsx — forces clean remount, resets all state, no edge cases with in-flight animations.
+   - **Resolution:** Implemented in Plan 03-05 Task 1 as `<MapView key={selectedGuest.tableNumber} .../>` per the RESEARCH.md recommendation. Confirmed by plan-checker (iteration 1) — `must_haves.truths` of 03-05 enforces the `key=` pattern.
 
 ---
 
