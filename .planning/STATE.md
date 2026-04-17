@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-05-PLAN.md (vite-plugin-pwa + UpdateToast)
-last_updated: "2026-04-17T17:29:51.944Z"
+stopped_at: Completed 04-06-PLAN.md (awaiting human UAT per .planning/phases/04-performance-offline/04-UAT.md)
+last_updated: "2026-04-17T17:38:28.062Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 17
-  completed_plans: 15
-  percent: 88
+  completed_plans: 16
+  percent: 94
 ---
 
 # Project State
@@ -60,6 +60,7 @@ Progress: [██░░░░░░░░] 20%
 | Phase 04-performance-offline P01 | 4min | 3 tasks | 7 files |
 | Phase 04-performance-offline P04 | 4min | 3 tasks | 9 files |
 | Phase 04-performance-offline P05 | ~5min | 3 tasks | 11 files |
+| Phase 04 P06 | 3min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,7 @@ Recent decisions affecting current work:
 - [Phase 04-performance-offline]: vite-plugin-pwa@^1.2.0 installed; VitePWA registered with registerType:'prompt' (not autoUpdate) so UpdateToast controls reload timing (D-05)
 - [Phase 04-performance-offline]: Vitest virtual-module resolution handled via resolve.alias pointing to src/test/pwa-register-react-stub.ts (vi.mock alone insufficient for Vitest 4.1.4 import-analysis)
 - [Phase 04-performance-offline]: UpdateToast uses createPortal(document.body) (Phase 3 MapView precedent) with suppressed={selectedGuest !== null} so the toast hides while MapView is open (D-07)
+- [Phase 04-performance-offline]: Phase 4 Plan 06: scripts/verify-pwa-build.mjs — tiny node existence-check (7 artifacts incl workbox-<hash>.js regex); chained as last step of npm run build so bundle-OK-but-missing-PWA cases fail CI
 
 ### Pending Todos
 
@@ -100,9 +102,10 @@ None yet.
 ### Blockers/Concerns
 
 - Table count is still being finalized — floor plan JSON will need updating once table count is locked. Phase 1 (percentage-based coordinates) mitigates the rework cost.
+- Phase 4 awaiting human UAT sign-off per .planning/phases/04-performance-offline/04-UAT.md — blocking items: PERF-01/1b (offline badge), PERF-02/2a (iOS Add-to-Home-Screen), PERF-03/3b (SW update toast). PERF-XX requirements held open in REQUIREMENTS.md until UAT passes.
 
 ## Session Continuity
 
-Last session: 2026-04-17T17:29:51.934Z
-Stopped at: Completed 04-05-PLAN.md (vite-plugin-pwa + UpdateToast)
+Last session: 2026-04-17T17:38:17.549Z
+Stopped at: Completed 04-06-PLAN.md (awaiting human UAT per .planning/phases/04-performance-offline/04-UAT.md)
 Resume file: None

@@ -80,7 +80,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 04-03-PLAN.md — scripts/generate-pwa-icons.mjs + sharp; emit 4 PWA icons to public/ (PERF-02 prerequisite)
 - [x] 04-04-PLAN.md — useOnlineStatus + useCacheAge hooks; StalenessBadge component; wire into App.tsx (PERF-01 UX)
 - [x] 04-05-PLAN.md — vite-plugin-pwa install + config (manifest, workbox, devOptions), Apple meta tags, UpdateToast portal component with suppression (PERF-01, PERF-02, PERF-03)
-- [ ] 04-06-PLAN.md — verify-pwa-build.mjs smoke test, README + CLAUDE.md docs, 04-UAT.md checklist, human-verify checkpoint (PERF-01..PERF-04)
+- [x] 04-06-PLAN.md — verify-pwa-build.mjs smoke test, README + CLAUDE.md docs, 04-UAT.md checklist, human-verify checkpoint (PERF-01..PERF-04)
 
 ### Phase 5: Setup Tooling
 **Goal**: An admin can map all table positions on a new floor plan by clicking on the image — no pixel coordinate calculation needed
