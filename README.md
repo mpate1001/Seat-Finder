@@ -27,21 +27,63 @@ A streamlined, mobile-friendly seat-lookup app built for the wedding of Mahek & 
 - Node.js (v18 or higher)
 - npm or yarn
 
-### Installation
+## Setup
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Configure the guest list data source:
+   ```bash
+   cp .env.example .env.local
+   # Open .env.local and set VITE_SHEET_URL to your published Google Sheets CSV URL.
+   ```
+
+   The URL comes from `File → Share → Publish to web → CSV` in Google Sheets.
+   It must end in `?output=csv`. The build will fail if this variable is unset
+   (enforced by the `requireSheetUrl()` plugin in `vite.config.ts`).
+
+3. (First-time or on rebrand) Generate PWA icons:
+   ```bash
+   npm run generate-pwa-icons
+   ```
+
+   This writes 4 PNG files to `public/` from an inline red-teardrop-pin SVG:
+   `pwa-192.png`, `pwa-512.png`, `pwa-512-maskable.png`, `apple-touch-icon.png`.
+   Commit these files — they ship as the PWA manifest icons.
+
+4. Generate floor-plan image variants (Phase 3 artifact — rerun only if the
+   source image in `src/assets/` changes):
+   ```bash
+   npm run generate-images
+   ```
+
+## Development
 
 ```bash
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
+npm run dev           # Vite dev server on :5173 (PWA SW enabled for testing)
+npm run test          # Vitest run-once
+npm run test:watch    # Vitest watch mode
+npm run lint          # ESLint strict (--max-warnings 0)
+npm run build         # Type-check, bundle, and verify PWA artifacts
+npm run preview       # Serve dist/ locally (test the built PWA)
 ```
+
+## PWA behavior
+
+- First load fetches the guest list from Google Sheets and caches it in
+  `localStorage` under `seatfinder.guests.v1`.
+- Subsequent loads are network-first with a 2-second timeout; if the network
+  is slow or offline, the cached list is served. Cache hard-expires after 24h.
+- Static assets (JS/CSS/fonts/icons) are precached by the service worker;
+  floor-plan images use a CacheFirst runtime rule (30-day TTL).
+- The Google Sheets URL itself is never cached by the service worker —
+  caching for that endpoint is done in the app layer (`src/services/guestsCache.ts`).
+- A new deploy is detected automatically; the user sees a bottom toast
+  ("New version available — Tap to refresh") and can opt in to reload.
+- Guests can add the app to their home screen via the browser's native
+  Add-to-Home-Screen affordance (no custom install prompt).
 
 ### Google Sheets Setup
 
@@ -60,7 +102,7 @@ The app pulls guest data from a published Google Sheet with the following struct
 To connect your own Google Sheet:
 1. Create a Google Sheet with the columns above
 2. Publish it to the web (File → Share → Publish to web → CSV)
-3. Update the `SHEET_URL` in `src/services/googleSheets.ts` with your published URL
+3. Paste the published URL into `.env.local` as `VITE_SHEET_URL=…` (see Setup above).
 
 ## Project Structure
 

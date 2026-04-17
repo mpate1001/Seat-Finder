@@ -101,6 +101,14 @@ A mobile-first wedding guest seating app for Mahek & Saumya's reception in Newpo
 - No custom aliases, proxy, or environment variable configuration
 - ESM module type (`"type": "module"` in `package.json`)
 ## Scripts
+- `npm run dev` — Vite dev server on :5173 (PWA service worker enabled via `devOptions.enabled: true`)
+- `npm run build` — Type-check (`tsc`), bundle (`vite build`), and verify PWA artifacts (`node scripts/verify-pwa-build.mjs`)
+- `npm run preview` — Serve the built `dist/` locally (production PWA test)
+- `npm run lint` — ESLint strict (`--max-warnings 0`, `.ts`/`.tsx`)
+- `npm run test` — Vitest run-once
+- `npm run test:watch` — Vitest watch mode
+- `npm run generate-images` — Regenerate floor-plan image variants (Phase 3 artifact)
+- `npm run generate-pwa-icons` — Regenerate PWA manifest icons from the inline red-pin SVG (Phase 4 artifact)
 ## Platform Requirements
 - Node.js (v22+ detected, likely works with v18+)
 - npm
