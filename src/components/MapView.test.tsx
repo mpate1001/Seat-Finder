@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup, act } from '@testing-library/react';
-import React from 'react';
+import React, { StrictMode } from 'react';
 import type { Guest } from '../types';
 
 // Mock react-zoom-pan-pinch — we only care about the interface MapView calls.
@@ -46,8 +46,10 @@ function guestFixture(overrides: Partial<Guest> = {}): Guest {
   };
 }
 
-function fireImageLoad(container: HTMLElement) {
-  const img = container.querySelector('img[alt="Reception floor plan"]');
+// MapView renders via createPortal(..., document.body), so DOM queries must
+// target document.body rather than the render container.
+function fireImageLoad() {
+  const img = document.body.querySelector('img[alt="Reception floor plan"]');
   if (!img) throw new Error('floor plan img not found');
   // jsdom does not decode images; manually dispatch the load event so the
   // onLoad handler in FloorPlan fires and flips MapView's imageLoaded state.
@@ -81,10 +83,10 @@ describe('MapView', () => {
   });
 
   it('zooms to assigned table', () => {
-    const { container } = render(
+    render(
       <MapView guest={guestFixture({ tableNumber: '12' })} onClose={vi.fn()} />,
     );
-    fireImageLoad(container);
+    fireImageLoad();
     advanceTimers(260);
 
     expect(zoomToElement).toHaveBeenCalledTimes(1);
@@ -99,10 +101,10 @@ describe('MapView', () => {
   });
 
   it('overview hold before zoom', () => {
-    const { container } = render(
+    render(
       <MapView guest={guestFixture({ tableNumber: '12' })} onClose={vi.fn()} />,
     );
-    fireImageLoad(container);
+    fireImageLoad();
 
     // Before the 250ms hold elapses, zoomToElement should NOT have been called
     expect(zoomToElement).not.toHaveBeenCalled();
@@ -115,13 +117,13 @@ describe('MapView', () => {
   });
 
   it('missing tableNumber shows fallback', () => {
-    const { container } = render(
+    render(
       <MapView
         guest={guestFixture({ tableNumber: '9999' })}
         onClose={vi.fn()}
       />,
     );
-    fireImageLoad(container);
+    fireImageLoad();
     advanceTimers(500);
 
     // Fallback text is visible
@@ -133,11 +135,11 @@ describe('MapView', () => {
   });
 
   it('picture element has avif + webp + png sources', () => {
-    const { container } = render(
+    render(
       <MapView guest={guestFixture({ tableNumber: '12' })} onClose={vi.fn()} />,
     );
 
-    const picture = container.querySelector('picture');
+    const picture = document.body.querySelector('picture');
     expect(picture).not.toBeNull();
 
     const avifSource = picture!.querySelector('source[type="image/avif"]');
@@ -154,5 +156,46 @@ describe('MapView', () => {
     expect(webpSource!.getAttribute('srcset')).toMatch(/\.webp/);
     expect(img!.getAttribute('src') ?? '').toMatch(/\.png$/);
     expect(img!.getAttribute('srcset') ?? '').toContain('.png');
+  });
+
+  // Regression: bug 1 from UAT — MapView was rendered inside App's `.card`
+  // div, which has `backdrop-filter: blur(10px)`. That promotes `.card` to the
+  // containing block for position:fixed descendants, so `.map-overlay`'s
+  // `inset:0` sized to the card instead of the viewport. Fix: createPortal to
+  // document.body.
+  it('portals overlay to document.body (not render container)', () => {
+    const { container } = render(
+      <MapView guest={guestFixture({ tableNumber: '12' })} onClose={vi.fn()} />,
+    );
+    // The testing-library render container should NOT contain the overlay.
+    expect(container.querySelector('.map-overlay')).toBeNull();
+    // The overlay must be a direct child of document.body.
+    const overlay = document.body.querySelector('.map-overlay');
+    expect(overlay).not.toBeNull();
+    expect(overlay!.parentElement).toBe(document.body);
+  });
+
+  // Regression: bug 2 from UAT — the history pushState/back() effect was not
+  // StrictMode-safe. In React 18 dev, StrictMode double-invokes effects
+  // (mount → cleanup → mount). The first cleanup called history.back() whose
+  // async popstate then fired against the second mount's listener, invoking
+  // onClose immediately and dismissing the map. Fix: ref-guarded push + a
+  // microtask-deferred pop that aborts if the effect re-runs before the tick.
+  it('does not call onClose under StrictMode double-mount', async () => {
+    const onClose = vi.fn();
+    vi.useRealTimers(); // queueMicrotask needs real timing
+    render(
+      <StrictMode>
+        <MapView guest={guestFixture({ tableNumber: '12' })} onClose={onClose} />
+      </StrictMode>,
+    );
+    // Flush any pending microtasks / popstate events
+    await Promise.resolve();
+    await Promise.resolve();
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(onClose).not.toHaveBeenCalled();
+    // Map overlay is still mounted
+    expect(document.body.querySelector('.map-overlay')).not.toBeNull();
   });
 });

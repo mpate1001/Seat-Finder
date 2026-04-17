@@ -65,6 +65,12 @@ export default function FloorPlan({ tableNumber, assignedPinRef, onImageLoad }: 
             loading="eager"
             decoding="async"
             onLoad={onImageLoad}
+            ref={(el) => {
+              // If the browser already has the image cached (e.g. from the
+              // preload link in App.tsx), the onLoad event never fires because
+              // it completed before React attached the handler. Fire manually.
+              if (el && el.complete && el.naturalWidth > 0) onImageLoad();
+            }}
             className="floor-plan-image"
           />
         </picture>

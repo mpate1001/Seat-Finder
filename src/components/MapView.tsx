@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   TransformWrapper,
   TransformComponent,
@@ -34,25 +35,56 @@ export default function MapView({ guest, onClose }: MapViewProps) {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
-  // Browser back-button integration — from RESEARCH.md Pattern 6
-  // IMPORTANT: never call history.back() inside the popstate handler (infinite loop risk)
+  // Browser back-button integration — StrictMode-safe.
+  // React 18 StrictMode double-invokes effects in dev (mount → cleanup → mount).
+  // The prior implementation pushed state on mount and called history.back() on
+  // cleanup; the async popstate from the first cleanup's back() then fired against
+  // the second mount's listener and closed the overlay immediately. The guard
+  // below (1) pushes at most one history entry per real open via a ref, and
+  // (2) only pops the entry when the component is genuinely unmounting (tracked
+  // via a cleanup-commit ref that survives StrictMode's synchronous unmount-remount).
+  const pushedRef = useRef(false);
+  const realUnmountRef = useRef(false);
+
   useEffect(() => {
-    history.pushState({ mapOpen: true }, '');
+    if (!pushedRef.current) {
+      history.pushState({ mapOpen: true }, '');
+      pushedRef.current = true;
+    }
 
     function handlePopState() {
+      // The user pressed Back (or some other code popped the entry).
+      // Our entry is gone — don't try to pop it again on unmount.
+      pushedRef.current = false;
       onClose();
     }
 
     window.addEventListener('popstate', handlePopState);
+
     return () => {
       window.removeEventListener('popstate', handlePopState);
-      // If MapView is closing via × or Escape (not Back), pop our pushed entry
-      const state = history.state as { mapOpen?: boolean } | null;
-      if (state?.mapOpen) {
-        history.back();
-      }
+      // StrictMode fires this cleanup synchronously then re-runs the effect.
+      // Defer the "did we actually unmount?" decision to a microtask: if the
+      // effect runs again before the microtask fires, realUnmountRef is cleared
+      // and we skip the pop.
+      realUnmountRef.current = true;
+      queueMicrotask(() => {
+        if (!realUnmountRef.current) return;
+        if (!pushedRef.current) return;
+        const state = history.state as { mapOpen?: boolean } | null;
+        if (state?.mapOpen) {
+          pushedRef.current = false;
+          history.back();
+        }
+      });
     };
   }, [onClose]);
+
+  // Clear the unmount flag on every mount — if StrictMode or a re-render
+  // re-invokes the effect, the deferred pop in the previous cleanup aborts.
+  useEffect(() => {
+    realUnmountRef.current = false;
+  });
 
   // Animation orchestration: 250ms hold → 700ms zoom to 2.75× on assigned pin
   // Only runs when image is loaded AND the guest has a valid position
@@ -85,7 +117,12 @@ export default function MapView({ guest, onClose }: MapViewProps) {
     setImageLoaded(true);
   }
 
-  return (
+  // Portal to document.body so `.map-overlay { position: fixed }` is rooted at the
+  // viewport. Without the portal, MapView renders inside App.tsx's `.card` div,
+  // whose `backdrop-filter: blur(10px)` promotes `.card` to the containing block
+  // for position:fixed descendants — the overlay would size to the card's padding
+  // box, not the viewport.
+  return createPortal(
     <div className="map-overlay" role="dialog" aria-modal="true" aria-label="Floor plan map">
       <div className="map-overlay-card" aria-live="polite">
         <h2 className="map-overlay-card-greeting">
@@ -138,6 +175,7 @@ export default function MapView({ guest, onClose }: MapViewProps) {
           </TransformComponent>
         </TransformWrapper>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
