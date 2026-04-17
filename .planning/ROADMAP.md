@@ -74,7 +74,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. The app can be added to a phone's home screen and opens without a browser URL bar
   3. Static assets (JS, CSS, images) load from the service worker cache on repeat visits — no network round trip needed
   4. The Google Sheets URL is not hardcoded — changing it requires only an environment variable update, not a code edit
-**Plans**: TBD
+**Plans**: 6 plans
+- [ ] 04-01-PLAN.md — Env var plumbing: VITE_SHEET_URL, .env.example, vite-env.d.ts, fail-fast guards, extract parseGuestsCsv (PERF-04)
+- [ ] 04-02-PLAN.md — guestsCache.ts SWR wrapper (2s timeout, 24h TTL, localStorage), wire into App.tsx with fetchedAt state (PERF-01)
+- [ ] 04-03-PLAN.md — scripts/generate-pwa-icons.mjs + sharp; emit 4 PWA icons to public/ (PERF-02 prerequisite)
+- [ ] 04-04-PLAN.md — useOnlineStatus + useCacheAge hooks; StalenessBadge component; wire into App.tsx (PERF-01 UX)
+- [ ] 04-05-PLAN.md — vite-plugin-pwa install + config (manifest, workbox, devOptions), Apple meta tags, UpdateToast portal component with suppression (PERF-01, PERF-02, PERF-03)
+- [ ] 04-06-PLAN.md — verify-pwa-build.mjs smoke test, README + CLAUDE.md docs, 04-UAT.md checklist, human-verify checkpoint (PERF-01..PERF-04)
 
 ### Phase 5: Setup Tooling
 **Goal**: An admin can map all table positions on a new floor plan by clicking on the image — no pixel coordinate calculation needed
@@ -96,5 +102,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Data Integrity | 3/3 | Complete | 2026-04-12 |
 | 2. Fuzzy Search | 2/2 | Complete | 2026-04-16 |
 | 3. Map Experience | 0/5 | Planning complete | - |
-| 4. Performance & Offline | 0/TBD | Not started | - |
+| 4. Performance & Offline | 0/6 | Planning complete | - |
 | 5. Setup Tooling | 0/TBD | Not started | - |
