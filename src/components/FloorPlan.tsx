@@ -75,38 +75,35 @@ export default function FloorPlan({ tableNumber, assignedPinRef, onImageLoad }: 
           />
         </picture>
         {Object.entries(config.tablePositions).map(([id, pos]) => {
-          const isAssigned = id === tableNumber;
+          // Only render the assigned table's pin. Non-assigned tables keep
+          // their numbers visible from the printed floor-plan image —
+          // overlaying slate dots obscured the image's own labels.
+          if (id !== tableNumber) return null;
           return (
             <div
               key={id}
-              ref={isAssigned ? assignedPinRef : undefined}
-              className={isAssigned ? 'pin-assigned' : 'pin-dot'}
+              ref={assignedPinRef}
+              className="pin-assigned"
               data-table-id={id}
               style={{
                 left: `${pos.x * 100}%`,
                 top: `${pos.y * 100}%`,
               }}
             >
-              {isAssigned ? (
-                <>
-                  <span className="pin-pulse-ring" aria-hidden="true" />
-                  <svg
-                    className="pin-assigned-svg"
-                    viewBox="0 0 36 44"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M18 0 C8 0 0 8 0 18 C0 28 18 44 18 44 C18 44 36 28 36 18 C36 8 28 0 18 0 Z"
-                      fill="#d90429"
-                      stroke="#ffffff"
-                      strokeWidth="2"
-                    />
-                  </svg>
-                  <span className="pin-assigned-number">{id}</span>
-                </>
-              ) : (
-                <span className="pin-label">{id}</span>
-              )}
+              <span className="pin-pulse-ring" aria-hidden="true" />
+              <svg
+                className="pin-assigned-svg"
+                viewBox="0 0 36 44"
+                aria-hidden="true"
+              >
+                <path
+                  d="M18 0 C8 0 0 8 0 18 C0 28 18 44 18 44 C18 44 36 28 36 18 C36 8 28 0 18 0 Z"
+                  fill="#d90429"
+                  stroke="#ffffff"
+                  strokeWidth="2"
+                />
+              </svg>
+              <span className="pin-assigned-number">{id}</span>
             </div>
           );
         })}
