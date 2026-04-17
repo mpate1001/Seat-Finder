@@ -1,0 +1,51 @@
+/* StalenessBadge.css — muted staleness/offline indicator shown inside .card.
+   Palette locked to CLAUDE.md conventions: #8d99ae (muted slate),
+   #2b2d42 (dark navy). Reuses the 10px radius from the app card.
+   Tap target is min 32x32 CSS px (CONTEXT specifics line 77). */
+
+.staleness-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 6px 10px;
+  margin: 8px 0 0 0;
+  background: transparent;
+  border: 1px solid rgba(141, 153, 174, 0.35);
+  border-radius: 10px;
+  color: #8d99ae;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.staleness-badge:hover,
+.staleness-badge:focus-visible {
+  background: rgba(141, 153, 174, 0.08);
+  border-color: rgba(141, 153, 174, 0.5);
+  outline: none;
+}
+
+.staleness-badge-stale {
+  color: #8d99ae;
+}
+
+/* Offline is slightly stronger — still muted, but the user needs to notice. */
+.staleness-badge-offline {
+  color: #2b2d42;
+  border-color: rgba(43, 45, 66, 0.35);
+  background: rgba(237, 242, 244, 0.6);
+}
+
+.staleness-badge-offline:hover,
+.staleness-badge-offline:focus-visible {
+  background: rgba(237, 242, 244, 0.9);
+  border-color: rgba(43, 45, 66, 0.6);
+}
+
+@media (max-width: 600px) {
+  .staleness-badge {
+    font-size: 11px;
+    padding: 5px 9px;
+  }
+}
