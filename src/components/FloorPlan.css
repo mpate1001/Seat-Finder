@@ -3,19 +3,32 @@
    close button + animation keyframes live in MapView.css (plan 03).
    Palette is locked to UI-SPEC: #d90429 (assigned only), #8d99ae, #2b2d42, #ffffff. */
 
-/* Wrapper — sized by TransformComponent; keeps it position: relative so marker
-   percentage coords resolve correctly. (RESEARCH.md Pattern 7.) */
+/* Wrapper — aspect-locked to the source floor plan (2400×1831 ≈ 1.31:1) so
+   pin percentage coords always align with image pixels. The min-width/
+   min-height pair guarantees the wrapper covers the viewport on both axes:
+   the aspect-ratio rule plus the two mins resolves to max(viewport.w,
+   viewport.h × aspect) × max(viewport.h, viewport.w / aspect). On a portrait
+   phone this yields a wrapper wider than the viewport — the user pans
+   horizontally to see edges — but no vertical black gap. */
 .floor-plan-wrapper {
   position: relative;
-  display: inline-block;
+  display: block;
   line-height: 0; /* eliminate baseline gap below the img */
-  width: 100%;
+  aspect-ratio: 2400 / 1831;
+  /* Viewport-anchored mins break the circular %-sizing cycle inside
+     react-zoom-pan-pinch's wrapper/content elements (which otherwise collapse
+     to the image's natural box). `100vw` + `100dvh` guarantee the wrapper
+     covers the viewport on both axes and the aspect-ratio resolves height. */
+  min-width: 100vw;
+  min-height: 100dvh;
+  width: auto;
+  height: auto;
 }
 
 .floor-plan-image {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
   user-select: none;
   -webkit-user-drag: none;
 }

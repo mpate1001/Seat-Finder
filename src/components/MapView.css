@@ -52,16 +52,26 @@
 }
 
 /* react-zoom-pan-pinch injects its own wrapper/content divs — these classes
-   are applied via wrapperClass/contentClass on <TransformComponent>. */
-.map-transform-wrapper {
+   are applied via wrapperClass/contentClass on <TransformComponent>. The
+   library pins its own math to wrapper dimensions, so the wrapper MUST stay
+   at viewport size; the content inside overflows, and the library's existing
+   overflow:hidden on the wrapper clips the visible area. */
+.map-surface > .react-transform-wrapper.map-transform-wrapper {
   width: 100%;
   height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   touch-action: none;
 }
 
+/* Content sizes itself to its child (.floor-plan-wrapper), which is
+   aspect-locked and covers the viewport. Using auto + min-100% lets the
+   wrapper dictate width/height while still filling when smaller. */
 .map-transform-content {
-  width: 100%;
-  height: 100%;
+  width: auto;
+  height: auto;
+  min-width: 100%;
+  min-height: 100%;
 }
 
 /* ====== Top-pinned overlay card (z=100) ====== */
