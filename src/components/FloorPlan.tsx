@@ -1,11 +1,17 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useTransformComponent } from 'react-zoom-pan-pinch';
 import './FloorPlan.css';
 import floorPlanConfig from '../config/floorPlan.json';
-// Import floor plan image - update this import when changing the floor plan image
-import floorPlanImageSrc from '../assets/Reception Seat Diagram.png';
 
 interface FloorPlanProps {
   tableNumber: string;
+  // Optional for backward-compat with TableModal (removed in Wave 5).
+  // MapView (Wave 3) always passes these; the legacy TableModal path renders
+  // the floor plan without zoom orchestration.
+  // Typed as React.Ref (not React.RefObject) so both a MutableRefObject from
+  // useRef<HTMLDivElement | null>(null) and a callback ref are assignable to
+  // the intrinsic <div ref={...}> prop in React 18 strict typing.
+  assignedPinRef?: React.Ref<HTMLDivElement>;
+  onImageLoad?: () => void;
 }
 
 interface TablePosition {
@@ -20,6 +26,15 @@ interface FloorPlanConfig {
 
 const config: FloorPlanConfig = floorPlanConfig;
 
+const AVIF_SRCSET =
+  '/floor-plan/floor-plan-900.avif 900w, /floor-plan/floor-plan-1600.avif 1600w, /floor-plan/floor-plan-2400.avif 2400w';
+const WEBP_SRCSET =
+  '/floor-plan/floor-plan-900.webp 900w, /floor-plan/floor-plan-1600.webp 1600w, /floor-plan/floor-plan-2400.webp 2400w';
+const PNG_SRCSET =
+  '/floor-plan/floor-plan-900.png 900w, /floor-plan/floor-plan-1600.png 1600w, /floor-plan/floor-plan-2400.png 2400w';
+const PNG_FALLBACK_SRC = '/floor-plan/floor-plan-1600.png';
+
+// DEV duplicate-position warning — retained from Phase 1 (regression guard)
 if (import.meta.env.DEV) {
   const seen = new Map<string, string>();
   for (const [id, pos] of Object.entries(config.tablePositions)) {
@@ -31,157 +46,67 @@ if (import.meta.env.DEV) {
   }
 }
 
-export default function FloorPlan({ tableNumber }: FloorPlanProps) {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageWidth, setImageWidth] = useState(0);
-  const [imageHeight, setImageHeight] = useState(0);
-  const [isEnlarged, setIsEnlarged] = useState(false);
-  const [enlargedDimensions, setEnlargedDimensions] = useState({ width: 0, height: 0, offsetX: 0, offsetY: 0 });
-  const imageRef = useRef<HTMLImageElement>(null);
-  const position = config.tablePositions[tableNumber];
-  const hasValidPosition = Boolean(position);
-
-  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    setImageWidth(e.currentTarget.offsetWidth);
-    setImageHeight(e.currentTarget.offsetHeight);
-    setImageLoaded(true);
-  };
-
-  useEffect(() => {
-    const el = imageRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setImageWidth(entry.contentRect.width);
-        setImageHeight(entry.contentRect.height);
-      }
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  const handleEnlargedImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.currentTarget;
-    const containerWidth = img.parentElement?.offsetWidth || 0;
-    const containerHeight = img.parentElement?.offsetHeight || 0;
-
-    // Calculate actual displayed dimensions with object-fit: contain
-    const imageAspect = img.naturalWidth / img.naturalHeight;
-    const containerAspect = containerWidth / containerHeight;
-
-    let displayWidth, displayHeight, offsetX, offsetY;
-
-    if (imageAspect > containerAspect) {
-      // Image is wider - constrained by width
-      displayWidth = containerWidth;
-      displayHeight = containerWidth / imageAspect;
-      offsetX = 0;
-      offsetY = (containerHeight - displayHeight) / 2;
-    } else {
-      // Image is taller - constrained by height
-      displayHeight = containerHeight;
-      displayWidth = containerHeight * imageAspect;
-      offsetX = (containerWidth - displayWidth) / 2;
-      offsetY = 0;
-    }
-
-    setEnlargedDimensions({ width: displayWidth, height: displayHeight, offsetX, offsetY });
-  };
-
-  const handleEnlarge = () => {
-    setIsEnlarged(true);
-  };
-
-  const handleClose = useCallback(() => {
-    setIsEnlarged(false);
-  }, []);
-
-  // Handle escape key to close enlarged view
-  useEffect(() => {
-    if (!isEnlarged) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isEnlarged, handleClose]);
-
-  return (
-    <>
-      <div className="floor-plan-container">
-        <div className="floor-plan-header">
-          <h3>You're seated at Table {tableNumber}</h3>
-        </div>
-
-        <div className="canvas-container" onClick={handleEnlarge} style={{ cursor: 'pointer' }}>
+export default function FloorPlan({ tableNumber, assignedPinRef, onImageLoad }: FloorPlanProps) {
+  // Adaptive label visibility (D-09). useTransformComponent re-runs cheaply on every
+  // transform state change; we toggle a single class on the wrapper and let CSS drive
+  // the fade (no per-marker re-render).
+  return useTransformComponent(({ state }) => {
+    const labelsVisible = state.scale >= 1.8;
+    return (
+      <div
+        className={`floor-plan-wrapper ${labelsVisible ? 'labels-visible' : ''}`}
+      >
+        <picture>
+          <source type="image/avif" srcSet={AVIF_SRCSET} sizes="100vw" />
+          <source type="image/webp" srcSet={WEBP_SRCSET} sizes="100vw" />
           <img
-            ref={imageRef}
-            src={floorPlanImageSrc}
-            alt="Reception Floor Plan"
+            src={PNG_FALLBACK_SRC}
+            srcSet={PNG_SRCSET}
+            sizes="100vw"
+            alt="Reception floor plan"
+            loading="eager"
+            decoding="async"
+            onLoad={onImageLoad}
             className="floor-plan-image"
-            onLoad={handleImageLoad}
           />
-
-          {imageLoaded && position && imageWidth > 0 && imageHeight > 0 && (
+        </picture>
+        {Object.entries(config.tablePositions).map(([id, pos]) => {
+          const isAssigned = id === tableNumber;
+          return (
             <div
-              className="point-marker"
-              data-table-id={tableNumber}
+              key={id}
+              ref={isAssigned ? assignedPinRef : undefined}
+              className={isAssigned ? 'pin-assigned' : 'pin-dot'}
+              data-table-id={id}
               style={{
-                left: `${position.x * imageWidth}px`,
-                top: `${position.y * imageHeight}px`,
+                left: `${pos.x * 100}%`,
+                top: `${pos.y * 100}%`,
               }}
             >
-              <div className="point-pulse" />
-            </div>
-          )}
-        </div>
-
-        <div className="floor-plan-legend">
-          {hasValidPosition ? (
-            <p>Click map to enlarge • Look for the pulsing red circle</p>
-          ) : (
-            <p className="floor-plan-warning">Table location not mapped - please ask staff for assistance</p>
-          )}
-        </div>
-      </div>
-
-      {isEnlarged && (
-        <div className="floor-plan-enlarged-overlay" onClick={handleClose}>
-          <div className="floor-plan-enlarged-content" onClick={(e) => e.stopPropagation()}>
-            <button className="floor-plan-close-button" onClick={handleClose}>
-              &times;
-            </button>
-            <div className="floor-plan-enlarged-header">
-              <h3>Table {tableNumber}</h3>
-            </div>
-            <div className="canvas-container-enlarged">
-              <img
-                src={floorPlanImageSrc}
-                alt="Reception Floor Plan - Enlarged"
-                className="floor-plan-image-enlarged"
-                onLoad={handleEnlargedImageLoad}
-              />
-
-              {imageLoaded && position && enlargedDimensions.width > 0 && (
-                <div
-                  className="point-marker"
-                  data-table-id={tableNumber}
-                  style={{
-                    left: `${enlargedDimensions.offsetX + position.x * enlargedDimensions.width}px`,
-                    top: `${enlargedDimensions.offsetY + position.y * enlargedDimensions.height}px`,
-                  }}
-                >
-                  <div className="point-pulse" />
-                </div>
+              {isAssigned ? (
+                <>
+                  <span className="pin-pulse-ring" aria-hidden="true" />
+                  <svg
+                    className="pin-assigned-svg"
+                    viewBox="0 0 36 44"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M18 0 C8 0 0 8 0 18 C0 28 18 44 18 44 C18 44 36 28 36 18 C36 8 28 0 18 0 Z"
+                      fill="#d90429"
+                      stroke="#ffffff"
+                      strokeWidth="2"
+                    />
+                  </svg>
+                  <span className="pin-assigned-number">{id}</span>
+                </>
+              ) : (
+                <span className="pin-label">{id}</span>
               )}
             </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
+          );
+        })}
+      </div>
+    );
+  });
 }
