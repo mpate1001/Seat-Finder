@@ -58,7 +58,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. The animated zoom works correctly on iOS Safari — no scroll bleed-through or layout jump occurs
   5. The floor plan image loads quickly on a mobile device — visibly compressed without quality loss on phone screens
 **Plans**: 5 plans
-- [ ] 03-01-PLAN.md — Install test + runtime deps (vitest, sharp, react-zoom-pan-pinch); create vitest config + test stubs (foundation for all Phase 3 plans)
+- [x] 03-01-PLAN.md — Install test + runtime deps (vitest, sharp, react-zoom-pan-pinch); create vitest config + test stubs (foundation for all Phase 3 plans)
 - [ ] 03-02-PLAN.md — Write scripts/generate-images.mjs and emit 9 committed image variants to public/floor-plan/ (MAP-05)
 - [ ] 03-03-PLAN.md — Create MapView.tsx + MapView.css: full-screen overlay, TransformWrapper, 250ms/700ms zoom sequence, Escape + popstate dismissal (MAP-01, MAP-02, MAP-04)
 - [ ] 03-04-PLAN.md — Refactor FloorPlan.tsx + FloorPlan.css: <picture> srcset, percentage markers, pin-assigned teardrop + pin-dot + adaptive labels (MAP-03, MAP-05)
