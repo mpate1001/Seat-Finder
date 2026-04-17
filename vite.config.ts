@@ -52,7 +52,14 @@ export default defineConfig({
       workbox: {
         // Precache ONLY the app shell — no floor-plan images (they go via runtime rules).
         globPatterns: ['**/*.{js,css,html,svg,ico,woff2}'],
-        globIgnores: ['**/floor-plan/**'],
+        // - floor-plan/** → runtime CacheFirst rule below.
+        // - SetupApp-*.js/.css → route-obscurity admin chunk; OpenCV+Tesseract WASM
+        //   bundle blows past the 2 MiB precache limit and is useless to guests who
+        //   never visit /setup (D-01, D-02). Workbox's StaleWhileRevalidate runtime
+        //   rule catches it on first admin visit. Excluding here keeps the PWA
+        //   precache manifest under the default 2 MiB cap and prevents the build
+        //   from failing.
+        globIgnores: ['**/floor-plan/**', '**/SetupApp-*.{js,css}'],
 
         // SPA navigation fallback — but never for the Sheets host.
         navigateFallback: '/index.html',
