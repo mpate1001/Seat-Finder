@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 03-04-PLAN.md (FloorPlan refactor — 2 files committed)
-last_updated: "2026-04-17T14:27:50.187Z"
+status: verifying
+stopped_at: Completed 03-05-PLAN.md (MapView integration + tests + cleanup)
+last_updated: "2026-04-17T14:40:30.637Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 10
-  completed_plans: 9
-  percent: 90
+  completed_plans: 10
+  percent: 100
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-12)
 
 Phase: 03 (map-experience) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-17
 
 Progress: [██░░░░░░░░] 20%
@@ -56,6 +56,7 @@ Progress: [██░░░░░░░░] 20%
 | Phase 03-map-experience P02 | 1min | 2 tasks | 10 files |
 | Phase 03-map-experience P03 | 3min | 2 tasks | 3 files |
 | Phase 03-map-experience P04 | 3min | 2 tasks | 2 files |
+| Phase 03-map-experience P05 | 8min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,9 @@ Recent decisions affecting current work:
 - [Phase 03-map-experience]: Phase 3 Plan 04: FloorPlan refactored to container-child shape; assignedPinRef typed as React.Ref<HTMLDivElement> (not RefObject<HTMLDivElement|null>) to satisfy React 18 LegacyRef expectation
 - [Phase 03-map-experience]: Phase 3 Plan 04: FloorPlan props assignedPinRef/onImageLoad made optional (not required) for TableModal backward-compat until Wave 5; keeps tsc --noEmit green
 - [Phase 03-map-experience]: Phase 3 Plan 04: Percentage CSS positioning (pos.x * 100%) replaces Phase 1 ResizeObserver + pixel-math; net -188 lines (-43%) across FloorPlan.tsx + FloorPlan.css
+- [Phase 03-map-experience]: Phase 3 Plan 05: App.tsx preload injected via useEffect at mount time (not index.html); hidden <img> at 1600w AVIF belt-and-suspenders inside .app-container
+- [Phase 03-map-experience]: Phase 3 Plan 05: key={selectedGuest.tableNumber} on <MapView> to force clean remount when a user selects a different guest while the map is open (RESEARCH.md Pitfall 5)
+- [Phase 03-map-experience]: Phase 3 Plan 05: FloorPlan props tightened back to required now that TableModal is deleted (Wave 4 compat shim removed); added eslint.config.js flat config and matchMedia polyfill in src/test/setup.ts as blocking-issue auto-fixes
 
 ### Pending Todos
 
@@ -88,6 +92,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-17T14:27:50.183Z
-Stopped at: Completed 03-04-PLAN.md (FloorPlan refactor — 2 files committed)
+Last session: 2026-04-17T14:40:18.583Z
+Stopped at: Completed 03-05-PLAN.md (MapView integration + tests + cleanup)
 Resume file: None
