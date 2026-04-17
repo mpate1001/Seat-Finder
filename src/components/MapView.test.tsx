@@ -1,105 +1,158 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, act } from '@testing-library/react';
+import React from 'react';
 import type { Guest } from '../types';
 
-// Mock react-zoom-pan-pinch so tests don't rely on the library's internals.
-// We expose a stable zoomToElement spy via the module-scoped mockZoomToElement.
-const mockZoomToElement = vi.fn();
-vi.mock('react-zoom-pan-pinch', () => ({
-  TransformWrapper: ({ children }: { children: React.ReactNode }) => {
-    return <div data-testid="transform-wrapper">{children}</div>;
-  },
-  TransformComponent: ({ children }: { children: React.ReactNode }) => {
-    return <div data-testid="transform-component">{children}</div>;
-  },
-}));
+// Mock react-zoom-pan-pinch — we only care about the interface MapView calls.
+// The spy is module-scoped so tests can assert the exact argument tuple that
+// MapView forwards from `zoomToElement(assignedPinRef.current, scale, ms, ...)`.
+const zoomToElement = vi.fn();
 
-// Mock FloorPlan (being refactored in Wave 4). This mock only needs to accept
-// the new props contract so TypeScript is happy and MapView renders cleanly.
-vi.mock('./FloorPlan', () => ({
-  default: ({ tableNumber }: { tableNumber: string }) => (
-    <div data-testid="floor-plan-mock" data-table-number={tableNumber}>
-      <picture>
-        <source type="image/avif" />
-        <source type="image/webp" />
-        <img alt="Reception Floor Plan" />
-      </picture>
-    </div>
-  ),
-}));
+vi.mock('react-zoom-pan-pinch', async () => {
+  const ReactActual = await vi.importActual<typeof import('react')>('react');
+  return {
+    TransformWrapper: ReactActual.forwardRef<unknown, { children: React.ReactNode }>(
+      function TransformWrapperMock({ children }, ref) {
+        ReactActual.useImperativeHandle(ref, () => ({ zoomToElement }));
+        return ReactActual.createElement(
+          'div',
+          { 'data-testid': 'transform-wrapper' },
+          children,
+        );
+      },
+    ),
+    TransformComponent: ({ children }: { children: React.ReactNode }) =>
+      ReactActual.createElement(
+        'div',
+        { 'data-testid': 'transform-content' },
+        children,
+      ),
+    useTransformComponent: (
+      fn: (args: { state: { scale: number } }) => React.ReactNode,
+    ) => fn({ state: { scale: 1 } }),
+  };
+});
 
 import MapView from './MapView';
 
-const guestWithValidTable: Guest = {
-  tableNumber: '12',
-  firstName: 'Mahek',
-  lastName: 'Patel',
-  contactInfo: '',
-  description: 'Bride',
-};
+function guestFixture(overrides: Partial<Guest> = {}): Guest {
+  return {
+    firstName: 'Test',
+    lastName: 'Guest',
+    tableNumber: '12',
+    contactInfo: '',
+    description: '',
+    ...overrides,
+  };
+}
 
-const guestWithInvalidTable: Guest = {
-  tableNumber: '999', // not in floorPlan.json
-  firstName: 'Test',
-  lastName: 'Guest',
-  contactInfo: '',
-  description: '',
-};
+function fireImageLoad(container: HTMLElement) {
+  const img = container.querySelector('img[alt="Reception floor plan"]');
+  if (!img) throw new Error('floor plan img not found');
+  // jsdom does not decode images; manually dispatch the load event so the
+  // onLoad handler in FloorPlan fires and flips MapView's imageLoaded state.
+  // Wrap in act() so React commits the state update and the effect subscribes
+  // to the setTimeout before we advance fake timers.
+  act(() => {
+    img.dispatchEvent(new Event('load'));
+  });
+}
 
-beforeEach(() => {
-  mockZoomToElement.mockClear();
-  // Reset history state between tests — MapView's popstate cleanup calls
-  // history.back() which leaves stale entries otherwise.
-  history.replaceState(null, '');
-});
-
-afterEach(() => {
-  cleanup();
-});
+function advanceTimers(ms: number) {
+  // Wrap timer advance in act() so any state updates inside the fired effect
+  // (e.g. library internal cleanup) flush cleanly before the next assertion.
+  act(() => {
+    vi.advanceTimersByTime(ms);
+  });
+}
 
 describe('MapView', () => {
-  it.todo('zooms to assigned table');
-  it.todo('overview hold before zoom');
+  beforeEach(() => {
+    vi.useFakeTimers();
+    zoomToElement.mockClear();
+    // Reset history state between tests — MapView's popstate cleanup calls
+    // history.back() which leaves stale entries otherwise.
+    history.replaceState(null, '');
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    cleanup();
+  });
+
+  it('zooms to assigned table', () => {
+    const { container } = render(
+      <MapView guest={guestFixture({ tableNumber: '12' })} onClose={vi.fn()} />,
+    );
+    fireImageLoad(container);
+    advanceTimers(260);
+
+    expect(zoomToElement).toHaveBeenCalledTimes(1);
+    const call = zoomToElement.mock.calls[0];
+    // Signature: (node, scale, animationTime, animationType, offsetX, offsetY)
+    expect(call[0]).toBeInstanceOf(HTMLElement); // assignedPinRef.current
+    expect(call[1]).toBe(2.75);
+    expect(call[2]).toBe(700);
+    expect(call[3]).toBe('easeOutQuart');
+    expect(call[4]).toBe(0);
+    expect(call[5]).toBe(64);
+  });
+
+  it('overview hold before zoom', () => {
+    const { container } = render(
+      <MapView guest={guestFixture({ tableNumber: '12' })} onClose={vi.fn()} />,
+    );
+    fireImageLoad(container);
+
+    // Before the 250ms hold elapses, zoomToElement should NOT have been called
+    expect(zoomToElement).not.toHaveBeenCalled();
+
+    advanceTimers(100);
+    expect(zoomToElement).not.toHaveBeenCalled();
+
+    advanceTimers(200); // total 300ms — past the 250ms threshold
+    expect(zoomToElement).toHaveBeenCalledTimes(1);
+  });
 
   it('missing tableNumber shows fallback', () => {
-    const onClose = vi.fn();
-    render(<MapView guest={guestWithInvalidTable} onClose={onClose} />);
+    const { container } = render(
+      <MapView
+        guest={guestFixture({ tableNumber: '9999' })}
+        onClose={vi.fn()}
+      />,
+    );
+    fireImageLoad(container);
+    advanceTimers(500);
 
-    // Overlay card still renders with the greeting
+    // Fallback text is visible
     expect(
-      screen.getByText((_content, el) => {
-        return el?.className === 'map-overlay-card-greeting' &&
-          /Welcome, Test!/.test(el?.textContent ?? '') &&
-          /Table 999/.test(el?.textContent ?? '');
-      })
+      screen.getByText(/please ask staff for directions/i),
     ).toBeInTheDocument();
-
-    // Fallback message is present
-    expect(
-      screen.getByText(/please ask staff for directions/i)
-    ).toBeInTheDocument();
-
-    // Close button still present
-    expect(screen.getByLabelText('Close map')).toBeInTheDocument();
+    // Zoom must NOT fire when the table is not in floorPlan.json
+    expect(zoomToElement).not.toHaveBeenCalled();
   });
 
   it('picture element has avif + webp + png sources', () => {
-    const onClose = vi.fn();
     const { container } = render(
-      <MapView guest={guestWithValidTable} onClose={onClose} />
+      <MapView guest={guestFixture({ tableNumber: '12' })} onClose={vi.fn()} />,
     );
 
-    // Picture element is rendered (via the FloorPlan child — Wave 4 provides
-    // the real markup; this assertion confirms MapView doesn't block it).
     const picture = container.querySelector('picture');
     expect(picture).not.toBeNull();
 
-    const avifSource = container.querySelector('source[type="image/avif"]');
-    const webpSource = container.querySelector('source[type="image/webp"]');
-    const imgFallback = container.querySelector('picture img');
+    const avifSource = picture!.querySelector('source[type="image/avif"]');
+    const webpSource = picture!.querySelector('source[type="image/webp"]');
+    const img = picture!.querySelector('img');
 
     expect(avifSource).not.toBeNull();
     expect(webpSource).not.toBeNull();
-    expect(imgFallback).not.toBeNull();
+    expect(img).not.toBeNull();
+
+    expect(avifSource!.getAttribute('srcset')).toContain('900w');
+    expect(avifSource!.getAttribute('srcset')).toContain('1600w');
+    expect(avifSource!.getAttribute('srcset')).toContain('2400w');
+    expect(webpSource!.getAttribute('srcset')).toMatch(/\.webp/);
+    expect(img!.getAttribute('src') ?? '').toMatch(/\.png$/);
+    expect(img!.getAttribute('srcset') ?? '').toContain('.png');
   });
 });
