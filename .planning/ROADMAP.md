@@ -78,7 +78,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 04-01-PLAN.md — Env var plumbing: VITE_SHEET_URL, .env.example, vite-env.d.ts, fail-fast guards, extract parseGuestsCsv (PERF-04)
 - [x] 04-02-PLAN.md — guestsCache.ts SWR wrapper (2s timeout, 24h TTL, localStorage), wire into App.tsx with fetchedAt state (PERF-01)
 - [x] 04-03-PLAN.md — scripts/generate-pwa-icons.mjs + sharp; emit 4 PWA icons to public/ (PERF-02 prerequisite)
-- [ ] 04-04-PLAN.md — useOnlineStatus + useCacheAge hooks; StalenessBadge component; wire into App.tsx (PERF-01 UX)
+- [x] 04-04-PLAN.md — useOnlineStatus + useCacheAge hooks; StalenessBadge component; wire into App.tsx (PERF-01 UX)
 - [ ] 04-05-PLAN.md — vite-plugin-pwa install + config (manifest, workbox, devOptions), Apple meta tags, UpdateToast portal component with suppression (PERF-01, PERF-02, PERF-03)
 - [ ] 04-06-PLAN.md — verify-pwa-build.mjs smoke test, README + CLAUDE.md docs, 04-UAT.md checklist, human-verify checkpoint (PERF-01..PERF-04)
 
