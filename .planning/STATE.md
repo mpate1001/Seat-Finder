@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 03-05-PLAN.md (MapView integration + tests + cleanup)
-last_updated: "2026-04-17T14:40:30.637Z"
+status: executing
+stopped_at: Completed 04-01-PLAN.md (VITE_SHEET_URL env var + fail-fast guards + parseGuestsCsv export)
+last_updated: "2026-04-17T17:04:04.667Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 5
-  completed_phases: 3
-  total_plans: 10
-  completed_plans: 10
-  percent: 100
+  completed_phases: 2
+  total_plans: 17
+  completed_plans: 11
+  percent: 65
 ---
 
 # Project State
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-12)
 
 **Core value:** A guest finds their table in under 10 seconds — search, see the number, see it on the map, walk there.
-**Current focus:** Phase 03 — map-experience
+**Current focus:** Phase 04 — performance-offline
 
 ## Current Position
 
-Phase: 03 (map-experience) — EXECUTING
-Plan: 5 of 5
-Status: Phase complete — ready for verification
+Phase: 04 (performance-offline) — EXECUTING
+Plan: 2 of 6
+Status: Ready to execute
 Last activity: 2026-04-17
 
 Progress: [██░░░░░░░░] 20%
@@ -57,6 +57,7 @@ Progress: [██░░░░░░░░] 20%
 | Phase 03-map-experience P03 | 3min | 2 tasks | 3 files |
 | Phase 03-map-experience P04 | 3min | 2 tasks | 2 files |
 | Phase 03-map-experience P05 | 8min | 3 tasks | 10 files |
+| Phase 04-performance-offline P01 | 4min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,9 @@ Recent decisions affecting current work:
 - [Phase 03-map-experience]: Phase 3 Plan 05: App.tsx preload injected via useEffect at mount time (not index.html); hidden <img> at 1600w AVIF belt-and-suspenders inside .app-container
 - [Phase 03-map-experience]: Phase 3 Plan 05: key={selectedGuest.tableNumber} on <MapView> to force clean remount when a user selects a different guest while the map is open (RESEARCH.md Pitfall 5)
 - [Phase 03-map-experience]: Phase 3 Plan 05: FloorPlan props tightened back to required now that TableModal is deleted (Wave 4 compat shim removed); added eslint.config.js flat config and matchMedia polyfill in src/test/setup.ts as blocking-issue auto-fixes
+- [Phase 04-performance-offline]: Phase 4 Plan 01: ImportMetaEnv.VITE_SHEET_URL typed as readonly string (not string | undefined) -- module-load guard crashes before consumers run, so downstream treats as non-nullable
+- [Phase 04-performance-offline]: Phase 4 Plan 01: Vite build-time guard uses configResolved hook (not config) because .env files are loaded between the two; guard scoped to config.command === 'build' so dev/test do not require process.env
+- [Phase 04-performance-offline]: Phase 4 Plan 01: freshImport() helper -- runtime-built spec + @vite-ignore + typeof cast -- enables per-test module cache-bust for guard tests without breaking strict tsc (ambient module augmentation rejected with TS2664)
 
 ### Pending Todos
 
@@ -92,6 +96,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-17T14:40:18.583Z
-Stopped at: Completed 03-05-PLAN.md (MapView integration + tests + cleanup)
+Last session: 2026-04-17T17:04:04.663Z
+Stopped at: Completed 04-01-PLAN.md (VITE_SHEET_URL env var + fail-fast guards + parseGuestsCsv export)
 Resume file: None

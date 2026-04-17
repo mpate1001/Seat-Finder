@@ -75,7 +75,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Static assets (JS, CSS, images) load from the service worker cache on repeat visits — no network round trip needed
   4. The Google Sheets URL is not hardcoded — changing it requires only an environment variable update, not a code edit
 **Plans**: 6 plans
-- [ ] 04-01-PLAN.md — Env var plumbing: VITE_SHEET_URL, .env.example, vite-env.d.ts, fail-fast guards, extract parseGuestsCsv (PERF-04)
+- [x] 04-01-PLAN.md — Env var plumbing: VITE_SHEET_URL, .env.example, vite-env.d.ts, fail-fast guards, extract parseGuestsCsv (PERF-04)
 - [ ] 04-02-PLAN.md — guestsCache.ts SWR wrapper (2s timeout, 24h TTL, localStorage), wire into App.tsx with fetchedAt state (PERF-01)
 - [ ] 04-03-PLAN.md — scripts/generate-pwa-icons.mjs + sharp; emit 4 PWA icons to public/ (PERF-02 prerequisite)
 - [ ] 04-04-PLAN.md — useOnlineStatus + useCacheAge hooks; StalenessBadge component; wire into App.tsx (PERF-01 UX)

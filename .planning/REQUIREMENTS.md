@@ -33,7 +33,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [ ] **PERF-01**: Guest list is cached in localStorage with stale-while-revalidate strategy (24h TTL, network-first with stale fallback)
 - [ ] **PERF-02**: App is installable as a PWA with offline support for static assets via service worker
 - [ ] **PERF-03**: Service worker precaches same-origin static assets only (never caches Google Sheets CSV URL)
-- [ ] **PERF-04**: Google Sheets URL is configurable via environment variable (VITE_SHEET_URL)
+- [x] **PERF-04**: Google Sheets URL is configurable via environment variable (VITE_SHEET_URL)
 
 ### Setup Tooling
 
@@ -93,7 +93,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PERF-01 | Phase 4 | Pending |
 | PERF-02 | Phase 4 | Pending |
 | PERF-03 | Phase 4 | Pending |
-| PERF-04 | Phase 4 | Pending |
+| PERF-04 | Phase 4 | Complete |
 | TOOL-01 | Phase 5 | Pending |
 | TOOL-02 | Phase 5 | Pending |
 | TOOL-03 | Phase 5 | Pending |
