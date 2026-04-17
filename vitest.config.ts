@@ -20,5 +20,11 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
+    // Stale agent worktrees under .claude/worktrees/ contain their own
+    // node_modules with a nested React instance. Including them in the test
+    // run produces "Cannot read properties of null (reading 'useState')"
+    // because hooks resolve against the outer React's dispatcher. These
+    // worktrees are out of scope for the main repo's test surface.
+    exclude: ['**/node_modules/**', '**/dist/**', '.claude/**'],
   },
 });
