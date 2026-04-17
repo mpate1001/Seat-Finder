@@ -57,7 +57,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Table markers show their table number as a readable label and are large enough to tap accurately on a phone screen
   4. The animated zoom works correctly on iOS Safari — no scroll bleed-through or layout jump occurs
   5. The floor plan image loads quickly on a mobile device — visibly compressed without quality loss on phone screens
-**Plans**: TBD
+**Plans**: 5 plans
+- [ ] 03-01-PLAN.md — Install test + runtime deps (vitest, sharp, react-zoom-pan-pinch); create vitest config + test stubs (foundation for all Phase 3 plans)
+- [ ] 03-02-PLAN.md — Write scripts/generate-images.mjs and emit 9 committed image variants to public/floor-plan/ (MAP-05)
+- [ ] 03-03-PLAN.md — Create MapView.tsx + MapView.css: full-screen overlay, TransformWrapper, 250ms/700ms zoom sequence, Escape + popstate dismissal (MAP-01, MAP-02, MAP-04)
+- [ ] 03-04-PLAN.md — Refactor FloorPlan.tsx + FloorPlan.css: <picture> srcset, percentage markers, pin-assigned teardrop + pin-dot + adaptive labels (MAP-03, MAP-05)
+- [ ] 03-05-PLAN.md — Wire MapView into App.tsx, add preload link + hidden img, delete TableModal, author tests, run full vitest/lint/build gate (MAP-01..MAP-05)
 **UI hint**: yes
 
 ### Phase 4: Performance & Offline
@@ -90,6 +95,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Data Integrity | 3/3 | Complete | 2026-04-12 |
 | 2. Fuzzy Search | 2/2 | Complete | 2026-04-16 |
-| 3. Map Experience | 0/TBD | Not started | - |
+| 3. Map Experience | 0/5 | Planning complete | - |
 | 4. Performance & Offline | 0/TBD | Not started | - |
 | 5. Setup Tooling | 0/TBD | Not started | - |
