@@ -2,7 +2,7 @@
 phase: 04-performance-offline
 plan: 06
 subsystem: build-verification
-status: awaiting_uat
+status: complete
 tags: [verification, uat, docs, build-smoke, PERF-01, PERF-02, PERF-03, PERF-04]
 
 requires:
