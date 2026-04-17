@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-03-PLAN.md (MapView component — 2 files + test flip committed)
-last_updated: "2026-04-17T14:20:51.343Z"
+stopped_at: Completed 03-04-PLAN.md (FloorPlan refactor — 2 files committed)
+last_updated: "2026-04-17T14:27:50.187Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 10
-  completed_plans: 8
-  percent: 80
+  completed_plans: 9
+  percent: 90
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-12)
 ## Current Position
 
 Phase: 03 (map-experience) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-04-17
 
@@ -55,6 +55,7 @@ Progress: [██░░░░░░░░] 20%
 | Phase 03-map-experience P01 | 2min | 2 tasks | 6 files |
 | Phase 03-map-experience P02 | 1min | 2 tasks | 10 files |
 | Phase 03-map-experience P03 | 3min | 2 tasks | 3 files |
+| Phase 03-map-experience P04 | 3min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,9 @@ Recent decisions affecting current work:
 - [Phase 03-map-experience]: Phase 3 Plan 03: MapView zoomToElement signature (pinRef, 2.75, 700, 'easeOutQuart', 0, 64) — offsetY=64 biases center so overlay card doesn't cover pin
 - [Phase 03-map-experience]: Phase 3 Plan 03: minScale=1.0 (fit-to-viewport lower bound per UI-SPEC) / maxScale=6 — UI-SPEC authoritative over RESEARCH.md earlier 0.3/0.5 examples
 - [Phase 03-map-experience]: Phase 3 Plan 03: Flipped 2 of 4 MapView it.todo stubs to real tests (missing-table fallback + picture source tree) via vi.mock on library+FloorPlan; 2 remain deferred to Plan 05 (need Wave 4 FloorPlan)
+- [Phase 03-map-experience]: Phase 3 Plan 04: FloorPlan refactored to container-child shape; assignedPinRef typed as React.Ref<HTMLDivElement> (not RefObject<HTMLDivElement|null>) to satisfy React 18 LegacyRef expectation
+- [Phase 03-map-experience]: Phase 3 Plan 04: FloorPlan props assignedPinRef/onImageLoad made optional (not required) for TableModal backward-compat until Wave 5; keeps tsc --noEmit green
+- [Phase 03-map-experience]: Phase 3 Plan 04: Percentage CSS positioning (pos.x * 100%) replaces Phase 1 ResizeObserver + pixel-math; net -188 lines (-43%) across FloorPlan.tsx + FloorPlan.css
 
 ### Pending Todos
 
@@ -84,6 +88,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-17T14:20:51.340Z
-Stopped at: Completed 03-03-PLAN.md (MapView component — 2 files + test flip committed)
+Last session: 2026-04-17T14:27:50.183Z
+Stopped at: Completed 03-04-PLAN.md (FloorPlan refactor — 2 files committed)
 Resume file: None
