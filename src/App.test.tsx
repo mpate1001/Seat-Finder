@@ -1,10 +1,22 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, waitFor, cleanup } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import React from 'react';
 
-// Mock the guest-list fetch so App mounts without hitting Google Sheets
+// Mock the guest-list fetch so App mounts without hitting Google Sheets.
+// After plan 04-02, App imports `fetchGuestsCached` from ./services/guestsCache
+// (not `fetchGuests` directly) — mock that module too. Keep the
+// ./services/googleSheets mock in place so any transitive import (e.g. the
+// SHEET_URL named export) resolves under a deterministic sentinel URL.
+const fetchGuestsCachedMock = vi.fn();
+
+vi.mock('./services/guestsCache', () => ({
+  fetchGuestsCached: (...args: unknown[]) => fetchGuestsCachedMock(...args),
+}));
+
 vi.mock('./services/googleSheets', () => ({
+  SHEET_URL: 'https://example.test/csv',
   fetchGuests: vi.fn().mockResolvedValue([]),
+  parseGuestsCsv: vi.fn(),
 }));
 
 // Mock react-zoom-pan-pinch. App only renders MapView when a guest is selected,
@@ -30,6 +42,16 @@ vi.mock('react-zoom-pan-pinch', async () => {
 import App from './App';
 
 describe('App', () => {
+  beforeEach(() => {
+    // Default: resolve with an empty-but-valid cache payload so App exits the
+    // loading branch. Individual tests below override this for error paths.
+    fetchGuestsCachedMock.mockReset();
+    fetchGuestsCachedMock.mockResolvedValue({
+      fetchedAt: '2026-04-17T10:00:00.000Z',
+      guests: [],
+    });
+  });
+
   afterEach(() => {
     // React-Testing-Library auto-cleanup runs App's useEffect cleanups, which
     // remove the injected preload link. We call cleanup() explicitly here to
@@ -66,5 +88,67 @@ describe('App', () => {
     expect(
       (preload as HTMLLinkElement & { fetchPriority?: string }).fetchPriority,
     ).toBe('high');
+  });
+});
+
+describe('<App /> cache integration', () => {
+  beforeEach(() => {
+    fetchGuestsCachedMock.mockReset();
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('renders guests from the cache wrapper on mount', async () => {
+    fetchGuestsCachedMock.mockResolvedValue({
+      fetchedAt: '2026-04-17T11:00:00.000Z',
+      guests: [
+        {
+          tableNumber: '1',
+          firstName: 'Alice',
+          lastName: 'Smith',
+          contactInfo: '',
+          description: '',
+        },
+        {
+          tableNumber: '2',
+          firstName: 'Bob',
+          lastName: 'Jones',
+          contactInfo: '',
+          description: '',
+        },
+      ],
+    });
+    render(<App />);
+    // Wait for the loading branch to unmount.
+    await waitFor(() => {
+      expect(screen.queryByText(/Loading guest list/)).toBeNull();
+    });
+    expect(screen.getByText(/Welcome!/)).toBeInTheDocument();
+    expect(fetchGuestsCachedMock).toHaveBeenCalledWith('https://example.test/csv');
+    // fetchedAt is threaded into the card via data-fetched-at attribute.
+    // Plan 04-04 will replace this with a proper <StalenessBadge /> element.
+    expect(document.querySelector('.card')?.getAttribute('data-fetched-at')).toBe(
+      '2026-04-17T11:00:00.000Z',
+    );
+  });
+
+  it('surfaces cache-wrapper error messages in the error card', async () => {
+    // D-10 copy — the exact string the cache wrapper throws when the cache is
+    // >24h stale AND the network is down. App renders it verbatim in the
+    // error card next to the Retry button.
+    fetchGuestsCachedMock.mockRejectedValue(
+      new Error(
+        "Can't reach the guest list. Ask staff for directions or try again in a moment.",
+      ),
+    );
+    render(<App />);
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Ask staff for directions or try again in a moment/),
+      ).toBeInTheDocument();
+    });
+    expect(screen.getByRole('button', { name: /Retry/ })).toBeInTheDocument();
   });
 });

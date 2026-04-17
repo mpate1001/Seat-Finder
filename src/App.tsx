@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Guest } from './types';
-import { fetchGuests } from './services/googleSheets';
+import { SHEET_URL } from './services/googleSheets';
+import { fetchGuestsCached } from './services/guestsCache';
 import { buildGuestIndex, searchGuests, type RankedGuest } from './services/searchGuests';
 import SearchForm from './components/SearchForm';
 import GuestDropdown from './components/GuestDropdown';
@@ -15,6 +16,9 @@ function App() {
   const [searchResults, setSearchResults] = useState<RankedGuest[]>([]);
   const [query, setQuery] = useState('');
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
+  // fetchedAt drives plan 04-04's StalenessBadge. Threaded through the .card
+  // data-fetched-at attribute below for now so plan 04-04 tests can read it.
+  const [fetchedAt, setFetchedAt] = useState<string | null>(null);
 
   const fuse = useMemo(() => buildGuestIndex(guests), [guests]);
 
@@ -45,8 +49,10 @@ function App() {
   async function loadGuests() {
     try {
       setLoading(true);
-      const guestData = await fetchGuests();
+      const { guests: guestData, fetchedAt: fetchedAtIso } =
+        await fetchGuestsCached(SHEET_URL);
       setGuests(guestData);
+      setFetchedAt(fetchedAtIso);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load guests');
@@ -97,7 +103,7 @@ function App() {
 
   return (
     <div className="app-container" style={{ backgroundImage: `url(${backgroundImage})` }}>
-      <div className="card">
+      <div className="card" data-fetched-at={fetchedAt ?? ''}>
         <h1 className="title">Seat Finder</h1>
         <p className="subtitle">Mahek & Saumya's Wedding</p>
         <p className="subtitle">May 24th 2026</p>
