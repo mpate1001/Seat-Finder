@@ -39,7 +39,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 - [ ] **TOOL-01**: Admin can upload a floor plan image and click on each table position to generate coordinate mappings
 - [ ] **TOOL-02**: Click-to-place editor exports percentage-based coordinates compatible with the app's floorPlan config
-- [ ] **TOOL-03**: Setup tool is excluded from the production guest-facing bundle (dev-only or separate route)
+- [x] **TOOL-03**: Setup tool is excluded from the production guest-facing bundle (dev-only or separate route)
 
 ## v2 Requirements
 
@@ -96,7 +96,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PERF-04 | Phase 4 | Complete |
 | TOOL-01 | Phase 5 | Pending |
 | TOOL-02 | Phase 5 | Pending |
-| TOOL-03 | Phase 5 | Pending |
+| TOOL-03 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 19 total

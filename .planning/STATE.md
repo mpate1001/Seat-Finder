@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-06-PLAN.md (awaiting human UAT per .planning/phases/04-performance-offline/04-UAT.md)
-last_updated: "2026-04-17T17:38:28.062Z"
+stopped_at: Completed 05-01-PLAN.md (route-split guest / setup with React.lazy scaffold — TOOL-03 proven by separate dist/assets/SetupApp chunk)
+last_updated: "2026-04-17T21:12:28.592Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 17
-  completed_plans: 16
-  percent: 94
+  total_plans: 24
+  completed_plans: 17
+  percent: 71
 ---
 
 # Project State
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-12)
 
 **Core value:** A guest finds their table in under 10 seconds — search, see the number, see it on the map, walk there.
-**Current focus:** Phase 04 — performance-offline
+**Current focus:** Phase 05 — setup-tooling
 
 ## Current Position
 
-Phase: 04 (performance-offline) — EXECUTING
-Plan: 4 of 6
+Phase: 05 (setup-tooling) — EXECUTING
+Plan: 2 of 7
 Status: Ready to execute
 Last activity: 2026-04-17
 
@@ -61,6 +61,7 @@ Progress: [██░░░░░░░░] 20%
 | Phase 04-performance-offline P04 | 4min | 3 tasks | 9 files |
 | Phase 04-performance-offline P05 | ~5min | 3 tasks | 11 files |
 | Phase 04 P06 | 3min | 3 tasks | 5 files |
+| Phase 05-setup-tooling P01 | 5min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,10 @@ Recent decisions affecting current work:
 - [Phase 04-performance-offline]: Vitest virtual-module resolution handled via resolve.alias pointing to src/test/pwa-register-react-stub.ts (vi.mock alone insufficient for Vitest 4.1.4 import-analysis)
 - [Phase 04-performance-offline]: UpdateToast uses createPortal(document.body) (Phase 3 MapView precedent) with suppressed={selectedGuest !== null} so the toast hides while MapView is open (D-07)
 - [Phase 04-performance-offline]: Phase 4 Plan 06: scripts/verify-pwa-build.mjs — tiny node existence-check (7 artifacts incl workbox-<hash>.js regex); chained as last step of npm run build so bundle-OK-but-missing-PWA cases fail CI
+- [Phase 05-setup-tooling]: Plan 05-01: Root.tsx extracted from main.tsx (pre-revised in plan-check) — tests import Root directly so jsdom never triggers createRoot(#root)
+- [Phase 05-setup-tooling]: Plan 05-01: lazy(() => import('./setup/SetupApp')) in Root.tsx is the SINGLE allowed guest->setup graph edge (D-01); all of 05-02..05-06 live inside src/setup/
+- [Phase 05-setup-tooling]: Plan 05-01: tsconfig.json types[] += 'node' to support node:fs/node:path/__dirname in src/main.test.tsx without a separate tsconfig.test.json (@types/node already devDep)
+- [Phase 05-setup-tooling]: Plan 05-01: .claude/** added to both eslint.config.js ignores and vitest.config.ts test.exclude — stale agent-worktree copies with nested node_modules break both tools
 
 ### Pending Todos
 
@@ -106,6 +111,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-17T17:38:17.549Z
-Stopped at: Completed 04-06-PLAN.md (awaiting human UAT per .planning/phases/04-performance-offline/04-UAT.md)
+Last session: 2026-04-17T21:12:28.588Z
+Stopped at: Completed 05-01-PLAN.md (route-split guest / setup with React.lazy scaffold — TOOL-03 proven by separate dist/assets/SetupApp chunk)
 Resume file: None
