@@ -17,3 +17,27 @@ if (typeof window !== 'undefined' && !window.matchMedia) {
     }),
   });
 }
+
+// jsdom does not implement OffscreenCanvas (used by src/setup/ocr.ts to wrap
+// ImageData for Tesseract v7, which rejects raw ImageData in its ImageLike
+// union). The setup-tooling tests mock tesseract.js so the fake worker never
+// reads canvas pixels — a minimal shape-matching polyfill is sufficient. In
+// the browser, the native OffscreenCanvas is used.
+if (typeof globalThis.OffscreenCanvas === 'undefined') {
+  class OffscreenCanvasPolyfill {
+    width: number;
+    height: number;
+    constructor(width: number, height: number) {
+      this.width = width;
+      this.height = height;
+    }
+    getContext(_contextId: string): { putImageData: (data: ImageData, dx: number, dy: number) => void } | null {
+      return {
+        putImageData: () => {
+          /* no-op for test polyfill */
+        },
+      };
+    }
+  }
+  (globalThis as unknown as { OffscreenCanvas: unknown }).OffscreenCanvas = OffscreenCanvasPolyfill;
+}
