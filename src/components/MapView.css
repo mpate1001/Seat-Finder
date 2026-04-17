@@ -1,6 +1,5 @@
-/* MapView.css — full-screen animated map overlay
-   Analog patterns: TableModal.css (fadeIn, slideUp, close-button),
-                    FloorPlan.css (overlay structure, pulse keyframe),
+/* MapView.css — full-screen animated map overlay.
+   Analog patterns: FloorPlan.css (overlay structure, pulse keyframe),
                     App.css (backdrop-filter blur on card).
    Palette locked to UI-SPEC: #2b2d42, #d90429, #8d99ae, #edf2f4, #ffffff. */
 

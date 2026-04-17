@@ -23,7 +23,7 @@ export default function MapView({ guest, onClose }: MapViewProps) {
 
   const hasValidPosition = Boolean(tablePositions[guest.tableNumber]);
 
-  // Escape-to-close — copied verbatim from TableModal.tsx lines 12-22
+  // Escape-to-close — canonical escape-to-close pattern for this codebase.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {

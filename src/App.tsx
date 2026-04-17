@@ -4,7 +4,7 @@ import { fetchGuests } from './services/googleSheets';
 import { buildGuestIndex, searchGuests, type RankedGuest } from './services/searchGuests';
 import SearchForm from './components/SearchForm';
 import GuestDropdown from './components/GuestDropdown';
-import TableModal from './components/TableModal';
+import MapView from './components/MapView';
 import backgroundImage from './assets/mahsompw-6074Z70_6074.jpeg';
 import './App.css';
 
@@ -20,6 +20,26 @@ function App() {
 
   useEffect(() => {
     loadGuests();
+  }, []);
+
+  // Preload the floor-plan AVIF variants on app mount (D-15 / RESEARCH.md Pattern 5).
+  // Injects a <link rel="preload"> with imagesrcset so the browser can pick the
+  // correct width and start the fetch in parallel with the guest-list load.
+  useEffect(() => {
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
+    link.type = 'image/avif';
+    link.setAttribute(
+      'imagesrcset',
+      '/floor-plan/floor-plan-900.avif 900w, /floor-plan/floor-plan-1600.avif 1600w, /floor-plan/floor-plan-2400.avif 2400w',
+    );
+    link.setAttribute('imagesizes', '100vw');
+    (link as HTMLLinkElement & { fetchPriority: string }).fetchPriority = 'high';
+    document.head.appendChild(link);
+    return () => {
+      document.head.removeChild(link);
+    };
   }, []);
 
   async function loadGuests() {
@@ -95,9 +115,19 @@ function App() {
         )}
 
         {selectedGuest && (
-          <TableModal guest={selectedGuest} onClose={closeModal} />
+          <MapView
+            key={selectedGuest.tableNumber}
+            guest={selectedGuest}
+            onClose={closeModal}
+          />
         )}
       </div>
+      <img
+        src="/floor-plan/floor-plan-1600.avif"
+        style={{ display: 'none' }}
+        aria-hidden="true"
+        alt=""
+      />
     </div>
   );
 }

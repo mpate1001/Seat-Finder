@@ -4,14 +4,12 @@ import floorPlanConfig from '../config/floorPlan.json';
 
 interface FloorPlanProps {
   tableNumber: string;
-  // Optional for backward-compat with TableModal (removed in Wave 5).
-  // MapView (Wave 3) always passes these; the legacy TableModal path renders
-  // the floor plan without zoom orchestration.
-  // Typed as React.Ref (not React.RefObject) so both a MutableRefObject from
-  // useRef<HTMLDivElement | null>(null) and a callback ref are assignable to
-  // the intrinsic <div ref={...}> prop in React 18 strict typing.
-  assignedPinRef?: React.Ref<HTMLDivElement>;
-  onImageLoad?: () => void;
+  // Forwarded by MapView: the ref is attached to the assigned table's pin div
+  // so the zoom animation can target it. Typed as React.Ref (not React.RefObject)
+  // so a MutableRefObject from useRef<HTMLDivElement | null>(null) and callback
+  // refs both satisfy the intrinsic <div ref={...}> prop under React 18 strict.
+  assignedPinRef: React.Ref<HTMLDivElement>;
+  onImageLoad: () => void;
 }
 
 interface TablePosition {
