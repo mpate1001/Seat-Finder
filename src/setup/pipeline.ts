@@ -28,14 +28,16 @@ import type { DraftPin, PipelineProgress } from './types';
 
 /** Largest dimension (long edge, pixels) the pipeline will process. Above this
  *  the source bitmap is downscaled via createImageBitmap before detection.
- *  Hough Circle Transform is O(N²) in pixels AND blocks the main thread;
- *  at 3000px a single admin upload triggered Chrome's "page unresponsive"
- *  watchdog. 1200px still froze the tab for >30s. 800px is the empirical
- *  sweet spot: tables are still ~30px across so Hough can separate them,
- *  and the full pipeline finishes in ~1-2 seconds. Downstream crops are
- *  scaled back to the source bitmap's fractions at export time (D-07), so
- *  the smaller working canvas doesn't affect export precision. */
-const MAX_DIMENSION = 600;
+ *  Raised back to 1200 now that Hough runs in a worker — at 1200×915 a single
+ *  HoughCircles call takes ~50 ms in the worker and recall is much better
+ *  (small tables on the source image stay detectable after downscale).
+ *  Pre-worker rounds 1-3 reduced this 3000 → 1200 → 800 → 600 purely to keep
+ *  main-thread Hough under Chrome's 15 s watchdog; that constraint is gone.
+ *  Downstream crops are scaled back to the source bitmap's fractions at
+ *  export time (D-07), so the working canvas size doesn't affect export
+ *  precision. Keeping it well below the original 3000 bounds keeps peak
+ *  WASM-heap usage manageable on low-end admin devices. */
+const MAX_DIMENSION = 1200;
 
 /** Yield to the browser's event loop so "Detecting..." / progress paints and
  *  the "page unresponsive" watchdog resets. */

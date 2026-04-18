@@ -1,276 +1,348 @@
 /**
- * Tests for src/setup/detect.ts — Hough circle detection with mocked OpenCV.
+ * Tests for src/setup/detect.ts — worker-dispatch layer.
  *
- * The @techstark/opencv-js module is mocked end-to-end via vi.mock so tests
- * never load the real WASM runtime (it's slow + non-deterministic under Node
- * per the 05-02 calibration notes). The fake cv namespace also tracks Mat
- * delete() calls on a module-level counter so the Pitfall 1 leak guard is
- * provably enforced on both success and error paths.
+ * The pure Hough algorithm is covered by src/setup/detect.core.test.ts. These
+ * specs exercise only the main-thread surface:
+ *   1. Request/response round-trip: postMessage payload shape, ImageData
+ *      transfer list, and the worker's `id` correlation.
+ *   2. Worker memoization: detectCircles shares a single Worker across calls.
+ *   3. Error propagation: `{ type: 'error' }` replies reject the caller's
+ *      promise with the carried message; worker `error` events are surfaced
+ *      as crash errors.
+ *   4. Concurrent requests: two in-flight detectCircles calls do not cross
+ *      their responses.
  *
- * Reference: .planning/phases/05-setup-tooling/05-RESEARCH.md §Pattern 2, §Pattern 3, §Pitfall 1
+ * The global `Worker` constructor is stubbed via `vi.stubGlobal` so no real
+ * worker script is loaded under jsdom. Each StubWorker instance records its
+ * postMessage calls and can fire synthetic `message` / `error` / `messageerror`
+ * events back through the registered listeners.
+ *
+ * Reference: ./detect.worker.ts message protocol
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { DEFAULT_HOUGH } from './houghDefaults';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
+import type { RawCircle } from './types';
 
 /* ------------------------------------------------------------------------- */
-/* Shared mutable fake-cv state hoisted so vi.mock factory can see it.       */
+/* Mock the transitively-imported OpenCV runtime.                             */
+/*                                                                            */
+/* detect.ts re-exports `getCv` from ./detect.core, which statically imports  */
+/* `@techstark/opencv-js`. Loading the real WASM runtime under jsdom hangs   */
+/* forever (no fetch for the .wasm file); the core algorithm path is already */
+/* covered by detect.core.test.ts with its own mock, so here we just shut    */
+/* the import up with an empty default.                                      */
 /* ------------------------------------------------------------------------- */
 
-const fakeState = vi.hoisted(() => {
-  // Tracks how many times any Mat instance has been .delete()'d.
-  let deleteCount = 0;
+vi.mock('@techstark/opencv-js', () => ({ default: {} }));
 
-  // Counts how many full getCv resolutions occurred (measures memoization).
-  let initCount = 0;
+/* ------------------------------------------------------------------------- */
+/* StubWorker — minimal Worker shape driven per-test via `onPost`.            */
+/* ------------------------------------------------------------------------- */
 
-  // Rows to write into the `circles` output Mat on the next HoughCircles call.
-  // Shape is a flat array of triplets [cx1, cy1, r1, cx2, cy2, r2, ...].
-  let nextCircles: number[] = [];
+type MessageListener = (ev: MessageEvent<unknown>) => void;
+type ErrorListener = (ev: ErrorEvent) => void;
 
-  // Next HoughCircles behaviour — throw synchronously if set.
-  let houghShouldThrow: Error | null = null;
+interface PostedFrame {
+  message: unknown;
+  transfer: Transferable[] | undefined;
+}
 
-  // Most recent HoughCircles call args (for assertion of default params).
-  let lastHoughArgs: {
-    dp: number;
-    minDist: number;
-    param1: number;
-    param2: number;
-    minRadius: number;
-    maxRadius: number;
-  } | null = null;
+class StubWorker {
+  static instances: StubWorker[] = [];
 
-  function reset() {
-    deleteCount = 0;
-    initCount = 0;
-    nextCircles = [];
-    houghShouldThrow = null;
-    lastHoughArgs = null;
+  url: string | URL;
+  options?: WorkerOptions;
+  posted: PostedFrame[] = [];
+  terminated = false;
+
+  /**
+   * Set by each test to control how the stub responds. Given the message the
+   * dispatcher posted, the handler returns either a single response frame
+   * (dispatched once) or an array (dispatched in order). Returning `null`
+   * dispatches nothing — useful for the crash / messageerror cases.
+   */
+  onPost: ((message: unknown) => unknown | unknown[] | null) | null = null;
+
+  private messageListeners = new Set<MessageListener>();
+  private errorListeners = new Set<ErrorListener>();
+  private messageErrorListeners = new Set<MessageListener>();
+
+  constructor(url: string | URL, options?: WorkerOptions) {
+    this.url = url;
+    this.options = options;
+    StubWorker.instances.push(this);
   }
 
-  return {
-    get deleteCount() { return deleteCount; },
-    incDelete() { deleteCount++; },
-    get initCount() { return initCount; },
-    incInit() { initCount++; },
-    get nextCircles() { return nextCircles; },
-    setNextCircles(triplets: number[]) { nextCircles = triplets; },
-    get houghShouldThrow() { return houghShouldThrow; },
-    setHoughThrow(err: Error | null) { houghShouldThrow = err; },
-    get lastHoughArgs() { return lastHoughArgs; },
-    setLastHoughArgs(a: typeof lastHoughArgs) { lastHoughArgs = a; },
-    reset,
-  };
-});
-
-/* ------------------------------------------------------------------------- */
-/* Mock @techstark/opencv-js with a controllable fake cv namespace.          */
-/* ------------------------------------------------------------------------- */
-
-vi.mock('@techstark/opencv-js', () => {
-  // Mat fake — tracks delete() calls globally and can hold a data32F buffer
-  // for the circles output.
-  class FakeMat {
-    cols = 0;
-    rows = 0;
-    data32F: Float32Array = new Float32Array(0);
-    delete() {
-      fakeState.incDelete();
-    }
+  addEventListener(
+    type: 'message' | 'error' | 'messageerror',
+    cb: MessageListener | ErrorListener,
+  ): void {
+    if (type === 'message') this.messageListeners.add(cb as MessageListener);
+    else if (type === 'error') this.errorListeners.add(cb as ErrorListener);
+    else this.messageErrorListeners.add(cb as MessageListener);
   }
 
-  // The exported module shape — default export is an object that starts with
-  // an unset onRuntimeInitialized, mimicking the real package's pre-init
-  // state. getCv() sets onRuntimeInitialized and waits for it to fire; the
-  // imread getter below fires it exactly once so the three-shape handler
-  // reaches the await-resolve branch.
-  const cv: Record<string, unknown> = {};
+  removeEventListener(
+    type: 'message' | 'error' | 'messageerror',
+    cb: MessageListener | ErrorListener,
+  ): void {
+    if (type === 'message') this.messageListeners.delete(cb as MessageListener);
+    else if (type === 'error') this.errorListeners.delete(cb as ErrorListener);
+    else this.messageErrorListeners.delete(cb as MessageListener);
+  }
 
-  cv.Size = class FakeSize {
-    constructor(public w: number, public h: number) {}
-  };
-
-  // OpenCV constants — unique numbers so we can assert argument identity.
-  cv.HOUGH_GRADIENT = 3;
-  cv.COLOR_RGBA2GRAY = 7;
-  cv.BORDER_DEFAULT = 4;
-
-  cv.imread = (_canvas: HTMLCanvasElement): FakeMat => new FakeMat();
-  cv.cvtColor = (_src: FakeMat, _dst: FakeMat, _code: number): void => {};
-  cv.GaussianBlur = (
-    _src: FakeMat,
-    _dst: FakeMat,
-    _size: unknown,
-    _sx: number,
-    _sy: number,
-    _border: number,
-  ): void => {};
-
-  cv.HoughCircles = (
-    _src: FakeMat,
-    out: FakeMat,
-    _method: number,
-    dp: number,
-    minDist: number,
-    param1: number,
-    param2: number,
-    minRadius: number,
-    maxRadius: number,
-  ): void => {
-    fakeState.setLastHoughArgs({
-      dp,
-      minDist,
-      param1,
-      param2,
-      minRadius,
-      maxRadius,
+  postMessage(message: unknown, transfer?: Transferable[]): void {
+    this.posted.push({ message, transfer });
+    if (!this.onPost) return;
+    const reply = this.onPost(message);
+    if (reply === null) return;
+    // Microtask-delay the reply so the caller's promise listener chain is
+    // armed before we fire — mirrors real worker message latency.
+    queueMicrotask(() => {
+      const frames = Array.isArray(reply) ? reply : [reply];
+      for (const frame of frames) {
+        this.dispatchMessage(frame);
+      }
     });
-    if (fakeState.houghShouldThrow) {
-      throw fakeState.houghShouldThrow;
-    }
-    const triplets = fakeState.nextCircles;
-    out.cols = triplets.length / 3;
-    out.rows = out.cols === 0 ? 0 : 1;
-    out.data32F = new Float32Array(triplets);
-  };
+  }
 
-  // The Mat constructor-as-value the code uses: `new cv.Mat()`. Bind to the
-  // FakeMat class via a wrapper so `new cv.Mat()` yields a FakeMat.
-  cv.Mat = FakeMat;
+  dispatchMessage(data: unknown): void {
+    const ev = { data } as MessageEvent<unknown>;
+    for (const cb of this.messageListeners) cb(ev);
+  }
 
-  // Drive the init path: we return the module uninitialized (no Mat property
-  // yet from the module-exists perspective of the three-shape handler) so
-  // getCv takes the onRuntimeInitialized branch.
-  //
-  // But the `mod as { Mat?: unknown }).Mat` check will see our `cv.Mat` class
-  // and short-circuit to the already-initialized branch. To force the
-  // onRuntimeInitialized path for the memoization spec, we defer attaching
-  // `Mat` until onRuntimeInitialized fires. A getter exposes it conditionally.
-  //
-  // Simpler: keep `Mat` attached at module load time so the three-shape
-  // handler takes the `(mod as …).Mat` branch. We still count getCv
-  // invocations via a wrapped-default-export handler below.
+  dispatchError(message: string): void {
+    const ev = { message } as ErrorEvent;
+    for (const cb of this.errorListeners) cb(ev);
+  }
 
-  // Attach an init counter: the promise wrapper in getCv is what we memoize.
-  // We expose `__trackInit` which detect.ts does NOT call — instead the
-  // memoization spec counts calls via the incInit shim we inject in the
-  // import graph. Easiest is to increment when the module is required — but
-  // ESM static import fires once. So instead we count via the getCv factory.
-  //
-  // Implementation choice: getCv is memoized at module scope in detect.ts,
-  // so the init counter is driven by `cv.Mat` construction frequency inside
-  // detectCircles — one per run. The memoization spec asserts getCv()
-  // returns the same promise instance across calls (identity check), which
-  // does not require a real init counter.
+  dispatchMessageError(): void {
+    const ev = {} as MessageEvent<unknown>;
+    for (const cb of this.messageErrorListeners) cb(ev);
+  }
 
-  return { default: cv };
-});
+  terminate(): void {
+    this.terminated = true;
+  }
+}
 
 /* ------------------------------------------------------------------------- */
+/* Test helpers                                                               */
+/* ------------------------------------------------------------------------- */
 
-async function loadDetect() {
-  // Re-import after vi.resetModules so the module-level cvPromise is cleared
-  // between tests. This lets the memoization spec observe a fresh cache.
-  return await import('./detect');
+function makeImageData(width: number, height: number): ImageData {
+  return {
+    width,
+    height,
+    data: new Uint8ClampedArray(width * height * 4),
+    colorSpace: 'srgb',
+  } as ImageData;
 }
 
-function makeFakeCanvas(width: number, height = 800): HTMLCanvasElement {
-  return { width, height } as unknown as HTMLCanvasElement;
+function makeCanvas(
+  width: number,
+  height: number,
+  imageData = makeImageData(width, height),
+): HTMLCanvasElement {
+  return {
+    width,
+    height,
+    getContext: (_type: string) => ({
+      getImageData: (_x: number, _y: number, _w: number, _h: number) =>
+        imageData,
+    }),
+  } as unknown as HTMLCanvasElement;
 }
+
+/* ------------------------------------------------------------------------- */
+/* Lifecycle                                                                  */
+/* ------------------------------------------------------------------------- */
 
 beforeEach(() => {
-  fakeState.reset();
+  StubWorker.instances.length = 0;
+  vi.stubGlobal('Worker', StubWorker as unknown as typeof Worker);
   vi.resetModules();
 });
 
-describe('getCv', () => {
-  it('resolves once and memoizes the promise across calls', async () => {
-    const { getCv } = await loadDetect();
-    const p1 = getCv();
-    const p2 = getCv();
-    expect(p1).toBe(p2);
-    const cv1 = await p1;
-    const cv2 = await p2;
-    expect(cv1).toBe(cv2);
-  });
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
-describe('detectCircles', () => {
-  it('returns parsed circles in order matching the HoughCircles output', async () => {
-    const { detectCircles } = await loadDetect();
-    fakeState.setNextCircles([
-      10, 20, 30,
-      40, 50, 60,
-      70, 80, 90,
-    ]);
-    const out = await detectCircles(makeFakeCanvas(1000));
-    expect(out).toEqual([
-      { cx: 10, cy: 20, r: 30 },
-      { cx: 40, cy: 50, r: 60 },
-      { cx: 70, cy: 80, r: 90 },
-    ]);
-  });
+async function loadDetect() {
+  const mod = await import('./detect');
+  // Always start from a fresh worker between tests.
+  mod.__resetWorkerForTests();
+  return mod;
+}
 
-  it('returns [] when HoughCircles writes an empty output Mat', async () => {
-    const { detectCircles } = await loadDetect();
-    fakeState.setNextCircles([]);
-    const out = await detectCircles(makeFakeCanvas(1000));
-    expect(out).toEqual([]);
-  });
+/* ------------------------------------------------------------------------- */
+/* Specs                                                                      */
+/* ------------------------------------------------------------------------- */
 
-  it('calls .delete() on all 4 Mats on the success path', async () => {
+describe('detectCircles (worker dispatch)', () => {
+  it('constructs a module worker the first time it is called', async () => {
     const { detectCircles } = await loadDetect();
-    fakeState.setNextCircles([1, 2, 3]);
-    await detectCircles(makeFakeCanvas(1000));
-    // src + gray + blurred + circles = 4.
-    expect(fakeState.deleteCount).toBe(4);
-  });
+    const canvas = makeCanvas(800, 600);
+    const fakeCircles: RawCircle[] = [{ cx: 1, cy: 2, r: 3 }];
 
-  it('calls .delete() on all 4 Mats on the error path', async () => {
-    const { detectCircles } = await loadDetect();
-    fakeState.setHoughThrow(new Error('boom'));
-    await expect(detectCircles(makeFakeCanvas(1000))).rejects.toThrow('boom');
-    expect(fakeState.deleteCount).toBe(4);
-  });
+    StubWorker.instances.length = 0;
 
-  it('uses DEFAULT_HOUGH(canvas.width) when opts is omitted', async () => {
-    const { detectCircles } = await loadDetect();
-    fakeState.setNextCircles([]);
-    await detectCircles(makeFakeCanvas(1000));
-    const expected = DEFAULT_HOUGH(1000);
-    expect(fakeState.lastHoughArgs).toEqual({
-      dp: expected.dp,
-      minDist: expected.minDist,
-      param1: expected.param1,
-      param2: expected.param2,
-      minRadius: expected.minRadius,
-      maxRadius: expected.maxRadius,
+    const promise = detectCircles(canvas);
+    expect(StubWorker.instances).toHaveLength(1);
+    const worker = StubWorker.instances[0];
+    expect(worker.options).toEqual({ type: 'module' });
+    // URL should reference detect.worker.ts (suffix check — the URL resolver
+    // prefixes with the file URL scheme).
+    expect(String(worker.url)).toContain('detect.worker');
+
+    // Fire the worker's reply so detectCircles resolves.
+    const postedId = (worker.posted[0].message as { id: number }).id;
+    worker.dispatchMessage({
+      id: postedId,
+      type: 'result',
+      circles: fakeCircles,
     });
-    // Guard the concrete numbers documented in 05-02-calibration.md so a
-    // future unrelated DEFAULT_HOUGH tweak can't silently drift.
-    expect(expected.minRadius).toBe(30);
-    expect(expected.maxRadius).toBe(60);
+    await expect(promise).resolves.toEqual(fakeCircles);
   });
 
-  it('honours a caller-supplied opts override', async () => {
+  it('transfers the ImageData pixel buffer to the worker', async () => {
     const { detectCircles } = await loadDetect();
-    fakeState.setNextCircles([]);
-    await detectCircles(makeFakeCanvas(1000), {
+    const imageData = makeImageData(800, 600);
+    const canvas = makeCanvas(800, 600, imageData);
+
+    const promise = detectCircles(canvas);
+    const worker = StubWorker.instances[0];
+    const frame = worker.posted[0];
+    expect(frame.transfer).toBeDefined();
+    expect(frame.transfer).toHaveLength(1);
+    expect(frame.transfer?.[0]).toBe(imageData.data.buffer);
+
+    const postedId = (frame.message as { id: number }).id;
+    worker.dispatchMessage({ id: postedId, type: 'result', circles: [] });
+    await promise;
+  });
+
+  it('includes the ImageData and opts in the posted message', async () => {
+    const { detectCircles } = await loadDetect();
+    const canvas = makeCanvas(1000, 800);
+
+    const opts = {
       dp: 2,
       minDist: 11,
       param1: 22,
       param2: 33,
       minRadius: 44,
       maxRadius: 55,
+    };
+    const promise = detectCircles(canvas, opts);
+    const worker = StubWorker.instances[0];
+    const msg = worker.posted[0].message as {
+      id: number;
+      imageData: ImageData;
+      opts: typeof opts;
+    };
+    expect(typeof msg.id).toBe('number');
+    expect(msg.imageData.width).toBe(1000);
+    expect(msg.imageData.height).toBe(800);
+    expect(msg.opts).toEqual(opts);
+
+    worker.dispatchMessage({ id: msg.id, type: 'result', circles: [] });
+    await promise;
+  });
+
+  it('reuses a single worker across sequential calls (memoization)', async () => {
+    const { detectCircles } = await loadDetect();
+    const canvas = makeCanvas(400, 300);
+
+    const p1 = detectCircles(canvas);
+    const w1 = StubWorker.instances[0];
+    const id1 = (w1.posted[0].message as { id: number }).id;
+    w1.dispatchMessage({ id: id1, type: 'result', circles: [] });
+    await p1;
+
+    const p2 = detectCircles(canvas);
+    // Same worker instance — we did NOT spawn a second one.
+    expect(StubWorker.instances).toHaveLength(1);
+    const id2 = (w1.posted[1].message as { id: number }).id;
+    expect(id2).not.toBe(id1);
+    w1.dispatchMessage({ id: id2, type: 'result', circles: [] });
+    await p2;
+  });
+
+  it('rejects with the message carried on a `type: "error"` response', async () => {
+    const { detectCircles } = await loadDetect();
+    const canvas = makeCanvas(400, 300);
+
+    const promise = detectCircles(canvas);
+    const worker = StubWorker.instances[0];
+    const id = (worker.posted[0].message as { id: number }).id;
+    worker.dispatchMessage({ id, type: 'error', message: 'hough failed' });
+    await expect(promise).rejects.toThrow('hough failed');
+  });
+
+  it('rejects when the worker emits an error event', async () => {
+    const { detectCircles } = await loadDetect();
+    const canvas = makeCanvas(400, 300);
+
+    const promise = detectCircles(canvas);
+    const worker = StubWorker.instances[0];
+    worker.dispatchError('worker crashed');
+    await expect(promise).rejects.toThrow('worker crashed');
+  });
+
+  it('rejects when the worker emits a messageerror event', async () => {
+    const { detectCircles } = await loadDetect();
+    const canvas = makeCanvas(400, 300);
+
+    const promise = detectCircles(canvas);
+    const worker = StubWorker.instances[0];
+    worker.dispatchMessageError();
+    await expect(promise).rejects.toThrow(/deserialize/);
+  });
+
+  it('correlates responses by id so concurrent calls do not cross-talk', async () => {
+    const { detectCircles } = await loadDetect();
+    const canvas = makeCanvas(400, 300);
+
+    const p1 = detectCircles(canvas);
+    const p2 = detectCircles(canvas);
+    const worker = StubWorker.instances[0];
+    const id1 = (worker.posted[0].message as { id: number }).id;
+    const id2 = (worker.posted[1].message as { id: number }).id;
+    expect(id1).not.toBe(id2);
+
+    // Reply to the SECOND request first.
+    worker.dispatchMessage({
+      id: id2,
+      type: 'result',
+      circles: [{ cx: 2, cy: 2, r: 2 }],
     });
-    expect(fakeState.lastHoughArgs).toEqual({
-      dp: 2,
-      minDist: 11,
-      param1: 22,
-      param2: 33,
-      minRadius: 44,
-      maxRadius: 55,
+    await expect(p2).resolves.toEqual([{ cx: 2, cy: 2, r: 2 }]);
+
+    // Then the first.
+    worker.dispatchMessage({
+      id: id1,
+      type: 'result',
+      circles: [{ cx: 1, cy: 1, r: 1 }],
     });
+    await expect(p1).resolves.toEqual([{ cx: 1, cy: 1, r: 1 }]);
+  });
+
+  it('throws synchronously when the canvas has no 2D context', async () => {
+    const { detectCircles } = await loadDetect();
+    const noCtx = {
+      width: 400,
+      height: 300,
+      getContext: () => null,
+    } as unknown as HTMLCanvasElement;
+
+    await expect(detectCircles(noCtx)).rejects.toThrow(/2D canvas context/);
   });
 });

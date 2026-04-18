@@ -1,155 +1,159 @@
 /**
- * src/setup/detect.ts — OpenCV.js Hough circle detection.
+ * src/setup/detect.ts — Hough detection dispatcher (Phase 5 Web-Worker hotfix).
  *
- * Responsibilities (Phase 5 Plan 05-04):
- *  1. Lazy, memoized initialization of the `@techstark/opencv-js` WASM runtime
- *     (§Pattern 2). The module-level promise dedupes across React StrictMode
- *     double-invoke and rapid admin clicks (§Pitfall 3).
- *  2. Hough Circle detection with a try/finally that delete()s every Mat on
- *     both the success and error paths (§Pitfall 1 — heap leak prevention).
+ * Thin main-thread layer that posts pixel data to `detect.worker.ts` and
+ * resolves with the resulting `RawCircle[]`. All WASM-bound Hough logic lives
+ * in `./detect.core` so the worker can reuse it without pulling in DOM types
+ * and so vitest can cover the algorithm path without constructing a real
+ * Worker.
  *
- * Consumed by src/setup/pipeline.ts. Must NOT be imported from any file
- * outside `src/setup/` so TOOL-03 bundle isolation stays intact (enforced by
- * the grep gate from plan 05-07).
+ * Why this layering: `cv.HoughCircles` is a synchronous WASM call. Running it
+ * on the main thread blocks paint + input for the full detection duration —
+ * on a 3300×2517 admin upload this tripped Chrome's "page unresponsive"
+ * watchdog even after 5.5× pixel reduction + stricter params (commit trail
+ * bc23627 → a4e0844 → 3f96916). Moving the call into a worker restores UI
+ * responsiveness regardless of compute time. Parameters and MAX_DIMENSION in
+ * pipeline.ts are unchanged in this hotfix — the fix is purely transport.
  *
- * References:
- *  - .planning/phases/05-setup-tooling/05-RESEARCH.md §Pattern 2, §Pattern 3, §Pitfall 1
- *  - .planning/phases/05-setup-tooling/05-CONTEXT.md D-05, D-06
- *  - .planning/phases/05-setup-tooling/05-02-calibration.md (accepted DEFAULT_HOUGH baseline)
+ * CRITICAL: this module must NEVER import `@techstark/opencv-js` — directly
+ * OR transitively through `./detect.core`. `@techstark/opencv-js` is ~10 MB
+ * of compiled JS whose top-level code sets up the Emscripten runtime. If the
+ * main-thread bundle evaluates it, the browser freezes for 10+ seconds at
+ * SetupApp mount time. Round 1 of this hotfix (commit history TBD) left a
+ * `export { getCv } from './detect.core'` re-export here for a convenience
+ * that no production code ever consumed; Vite pulled OpenCV into the
+ * SetupApp chunk anyway and the UI still froze. Removing the re-export made
+ * detect.core a worker-only module. Do NOT reintroduce any value import
+ * from './detect.core' — type-only imports are fine because TypeScript
+ * strips them at build time, but Vite's graph analysis still inspects token
+ * strings, so keep detect.core entirely out of this file when possible.
+ *
+ * Public surface:
+ *   - `detectCircles(canvas, opts?)` — unchanged signature so pipeline.ts
+ *     needs no edits. Internally reads the canvas's pixels into an ImageData,
+ *     transfers the backing ArrayBuffer to the worker, and returns a Promise
+ *     that resolves when the worker posts back.
+ *
+ * Message protocol: see `./detect.worker.ts`.
  */
 
-import cvModule from '@techstark/opencv-js';
 import type { HoughOpts, RawCircle } from './types';
-import { DEFAULT_HOUGH } from './houghDefaults';
-
-/**
- * The shape of the default-exported `cv` namespace. Typed via the module's
- * own default-export type so imread/Mat/HoughCircles/etc. are discoverable
- * without re-declaring the surface.
- */
-type CvNamespace = typeof cvModule;
 
 /* ------------------------------------------------------------------------- */
-/* getCv — memoized runtime init                                             */
+/* Worker lifecycle                                                           */
 /* ------------------------------------------------------------------------- */
 
 /**
- * Module-level singleton guarding concurrent initialization. Declared at
- * module scope (NOT inside a React hook) so a StrictMode double-mount, two
- * rapid admin clicks, or a queued microtask all resolve to the same promise
- * instead of spawning parallel WASM inits (§Pitfall 3).
+ * Worker-response union. Discriminated by `type` so the dispatcher can map
+ * success/failure into a Promise.resolve / reject without stringly-typed
+ * branching.
  */
-let cvPromise: Promise<CvNamespace> | null = null;
+type DetectResponse =
+  | { id: number; type: 'result'; circles: RawCircle[] }
+  | { id: number; type: 'error'; message: string };
 
 /**
- * Returns the initialized OpenCV.js namespace, blocking on WASM runtime
- * readiness the first time it's called.
+ * Memoized worker singleton. The Hough worker loads the OpenCV WASM runtime
+ * on first message (~300 ms cold-start); reusing the same worker across
+ * detection runs keeps every subsequent Detect click cheap. React StrictMode
+ * double-mount and rapid admin clicks all resolve to the same worker.
  *
- * Handles all three shapes the @techstark/opencv-js default export has been
- * observed to return across versions and build tools (§Pattern 2):
- *   (a) the default export IS a Promise that resolves to the `cv` namespace;
- *   (b) the default export is already initialized — `.Mat` is a class;
- *   (c) the default export is an object waiting for its
- *       `onRuntimeInitialized` hook to fire.
+ * Exported `__resetWorkerForTests` below clears the cache for vitest isolation.
  */
-export function getCv(): Promise<CvNamespace> {
-  if (cvPromise) return cvPromise;
+let workerInstance: Worker | null = null;
 
-  cvPromise = (async () => {
-    const mod = cvModule as unknown;
+/**
+ * Monotonic request counter. Each detectCircles call gets a unique id that
+ * threads through main → worker → main so concurrent calls cannot cross
+ * their responses. We never wrap — detection throughput tops out at maybe a
+ * handful of calls per admin session, so `number` is abundant.
+ */
+let nextRequestId = 0;
 
-    // Shape (a): some builds return a Promise from the default export.
-    if (mod instanceof Promise) {
-      return (await mod) as CvNamespace;
-    }
+function getWorker(): Worker {
+  if (workerInstance !== null) return workerInstance;
+  workerInstance = new Worker(
+    new URL('./detect.worker.ts', import.meta.url),
+    { type: 'module' },
+  );
+  return workerInstance;
+}
 
-    // Shape (b): runtime already initialized (e.g. shared across modules).
-    if ((mod as { Mat?: unknown }).Mat) {
-      return mod as CvNamespace;
-    }
-
-    // Shape (c): arm the onRuntimeInitialized callback and wait.
-    await new Promise<void>((resolve) => {
-      (mod as { onRuntimeInitialized: () => void }).onRuntimeInitialized = () => resolve();
-    });
-    return mod as CvNamespace;
-  })();
-
-  return cvPromise;
+/**
+ * Test-only hook: drops the memoized worker so a fresh stub can be installed
+ * between specs. Not exported from `./index.ts` and not reachable from any
+ * production caller — intentionally underscore-prefixed to advertise intent.
+ */
+export function __resetWorkerForTests(): void {
+  workerInstance = null;
+  nextRequestId = 0;
 }
 
 /* ------------------------------------------------------------------------- */
-/* detectCircles — Hough Circle Transform with Mat lifecycle discipline      */
+/* detectCircles — canvas → ImageData → worker → RawCircle[]                 */
 /* ------------------------------------------------------------------------- */
 
 /**
- * Runs the Hough Circle Transform on a canvas and returns the raw circles in
- * pixel coordinates. The caller (pipeline.ts) is responsible for translating
- * these into DraftPin fractions (D-07).
+ * Runs Hough Circle Transform on the pixels of `canvas` and returns the
+ * detected circles. Heavy lifting happens inside the detect worker; this
+ * function just marshals ImageData across the worker boundary.
  *
- * Every `cv.Mat` allocated inside this function is .delete()'d in a `finally`
- * block — both on success and when HoughCircles throws. This is the only
- * protection against the WASM-heap leak described in §Pitfall 1. Adding a
- * new intermediate Mat requires adding it to the `finally` block.
- *
- * When no `opts` is supplied, DEFAULT_HOUGH(canvas.width) is used so the
- * parameters scale with the uploaded image's resolution (§Pattern 3, §Pitfall 4).
+ * The canvas itself is NOT transferred — only the ImageData's underlying
+ * `Uint8ClampedArray.buffer` is listed in the transfer list. The caller's
+ * canvas remains paintable; the ImageData object we pulled from it becomes
+ * detached after postMessage, which is fine because we don't touch it again.
  */
 export async function detectCircles(
   canvas: HTMLCanvasElement,
   opts?: HoughOpts,
 ): Promise<RawCircle[]> {
-  const cv = await getCv();
-  const params: HoughOpts = opts ?? DEFAULT_HOUGH(canvas.width);
-
-  const src = cv.imread(canvas);
-  const gray = new cv.Mat();
-  const blurred = new cv.Mat();
-  const circles = new cv.Mat();
-  try {
-    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-    cv.GaussianBlur(
-      gray,
-      blurred,
-      new cv.Size(5, 5),
-      1.5,
-      1.5,
-      cv.BORDER_DEFAULT,
-    );
-    cv.HoughCircles(
-      blurred,
-      circles,
-      cv.HOUGH_GRADIENT,
-      params.dp,
-      params.minDist,
-      params.param1,
-      params.param2,
-      params.minRadius,
-      params.maxRadius,
-    );
-
-    // HoughCircles packs results as [cx, cy, r] triplets along a single row.
-    // An empty detection leaves circles.cols === 0 OR circles.rows === 0 —
-    // both shapes mean "no circles found" and must return []. Do NOT throw.
-    if (circles.cols === 0 || circles.rows === 0) {
-      return [];
-    }
-
-    const out: RawCircle[] = [];
-    for (let i = 0; i < circles.cols; i++) {
-      out.push({
-        cx: circles.data32F[i * 3],
-        cy: circles.data32F[i * 3 + 1],
-        r: circles.data32F[i * 3 + 2],
-      });
-    }
-    return out;
-  } finally {
-    // All four Mats must be deleted even on error (§Pitfall 1 — each unfreed
-    // Mat keeps ~several MB of WASM memory alive across runs).
-    src.delete();
-    gray.delete();
-    blurred.delete();
-    circles.delete();
+  const ctx = canvas.getContext('2d');
+  if (ctx === null) {
+    throw new Error('detect: failed to acquire 2D canvas context');
   }
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+  const worker = getWorker();
+  const id = ++nextRequestId;
+
+  return new Promise<RawCircle[]>((resolve, reject) => {
+    function handleMessage(event: MessageEvent<DetectResponse>): void {
+      const data = event.data;
+      // Messages for other in-flight requests share the same worker —
+      // ignore anything with a mismatched id. The listener is only removed
+      // after we see our own id, so other listeners still get their copy.
+      if (data.id !== id) return;
+      worker.removeEventListener('message', handleMessage);
+      worker.removeEventListener('error', handleError);
+      worker.removeEventListener('messageerror', handleMessageError);
+      if (data.type === 'result') {
+        resolve(data.circles);
+      } else {
+        reject(new Error(data.message));
+      }
+    }
+
+    function handleError(event: ErrorEvent): void {
+      worker.removeEventListener('message', handleMessage);
+      worker.removeEventListener('error', handleError);
+      worker.removeEventListener('messageerror', handleMessageError);
+      reject(new Error(event.message || 'detect worker crashed'));
+    }
+
+    function handleMessageError(): void {
+      worker.removeEventListener('message', handleMessage);
+      worker.removeEventListener('error', handleError);
+      worker.removeEventListener('messageerror', handleMessageError);
+      reject(new Error('detect worker: failed to deserialize message'));
+    }
+
+    worker.addEventListener('message', handleMessage);
+    worker.addEventListener('error', handleError);
+    worker.addEventListener('messageerror', handleMessageError);
+
+    worker.postMessage(
+      { id, imageData, opts },
+      [imageData.data.buffer],
+    );
+  });
 }

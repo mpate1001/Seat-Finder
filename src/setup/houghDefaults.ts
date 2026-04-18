@@ -20,31 +20,29 @@ import type { HoughOpts } from './types';
 /** Canny upper threshold — default for clean black-on-white line art. */
 export const HOUGH_PARAM1 = 100;
 
-/** Accumulator threshold — lower = more circles + more false positives AND
- *  exponentially more main-thread CPU. Raised from 30 → 50 after UAT showed
- *  param2=30 at 1200px working-width kept the browser unresponsive for 30+
- *  seconds. At 50 the detector is stricter (may miss a few tables; admin
- *  can add them manually in the review UI — D-12) but finishes in ~1s on
- *  an 800px working canvas. */
-export const HOUGH_PARAM2 = 80;
+/** Accumulator threshold — lower = more circles + more false positives.
+ *  Reset to 30 (the 05-02 calibrated value) now that Hough runs in a worker
+ *  at ~12-50 ms regardless. The main-thread-motivated tightening rounds
+ *  (30 → 50 → 80) were compensating for a thenable-absorption bug in
+ *  detect.core's getCv(), not for an actual CPU constraint. */
+export const HOUGH_PARAM2 = 30;
 
 /** `dp` (accumulator resolution) — `1` = same as image, correct for line art. */
 export const HOUGH_DP = 1;
 
 /** Fraction of image width used as `minDist` (centers closer than this merge).
- *  Tightened 0.03 → 0.06 after UAT: tables in a wedding hall are typically
- *  further apart than 3% of image width, and raising the floor prunes
- *  many redundant accumulator peaks that Hough would otherwise evaluate. */
-export const MIN_DIST_FRACTION = 0.06;
+ *  Reset to 0.03 — the 05-02 calibrated value. The earlier 0.03 → 0.06 bump
+ *  was main-thread tuning, not a detection-quality ask. */
+export const MIN_DIST_FRACTION = 0.03;
 
 /** Fraction of image width used as `minRadius` (smallest plausible table).
- *  Narrowed 0.012 → 0.03 to match real table sizes on a typical floor plan
- *  (~5-8% of image width per table). Fewer candidate radii = faster Hough. */
-export const MIN_RADIUS_FRACTION = 0.03;
+ *  Reset to 0.012 — on a 1200px working canvas that's ~14 px, which matches
+ *  the actual smallest table circles on a typical wedding floor plan image. */
+export const MIN_RADIUS_FRACTION = 0.012;
 
 /** Fraction of image width used as `maxRadius` (largest plausible table).
- *  Narrowed 0.035 → 0.06 — same narrowing logic as MIN_RADIUS_FRACTION. */
-export const MAX_RADIUS_FRACTION = 0.06;
+ *  Reset to 0.035 — ~42 px on a 1200px canvas, matches the largest tables. */
+export const MAX_RADIUS_FRACTION = 0.035;
 
 /**
  * Build the default Hough parameter set scaled to the supplied image width.
