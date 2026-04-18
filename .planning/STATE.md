@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: "Phase 5 Plan 07 autonomous tasks complete (3/3 committed: a949d3f, d75d97c, eb2dfb4); awaiting admin UAT on 05-UAT.md (Task 4 checkpoint:human-verify)"
-last_updated: "2026-04-18T18:29:59.986Z"
+stopped_at: "Phase 5 hotfix landed (5 commits: 7dcc253..6c09f26 on dev) — worker offload + thenable strip + OCR preprocessing + layout fits + confidence tune. 135/135 specs green. See .planning/phases/05-setup-tooling/05-HOTFIX-SUMMARY.md. Pending admin UAT on 05-UAT.md."
+last_updated: "2026-04-18T23:40:00.000Z"
 last_activity: 2026-04-18
 progress:
   total_phases: 5
