@@ -59,7 +59,15 @@ export default defineConfig({
         //   rule catches it on first admin visit. Excluding here keeps the PWA
         //   precache manifest under the default 2 MiB cap and prevents the build
         //   from failing.
-        globIgnores: ['**/floor-plan/**', '**/SetupApp-*.{js,css}'],
+        // - detect.worker-*.js → the Hough detection worker shipped as part of the
+        //   Phase 5 UI-responsiveness hotfix. Same reasoning as SetupApp-*: admin-
+        //   only, carries the opencv payload, and is lazy-loaded only when the
+        //   admin clicks Detect.
+        globIgnores: [
+          '**/floor-plan/**',
+          '**/SetupApp-*.{js,css}',
+          '**/detect.worker-*.js',
+        ],
 
         // SPA navigation fallback — but never for the Sheets host.
         navigateFallback: '/index.html',

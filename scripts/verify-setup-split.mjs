@@ -98,7 +98,15 @@ if (entryViolations.length > 0) {
 // Positive assertion: a setup chunk exists AND contains at least one of
 // opencv / tesseract. Guards against the "tree-shaken into nothing" regression
 // where the forbidden-list check would trivially pass.
-const setupCandidates = jsFiles.filter((f) => /setup|SetupApp/i.test(f));
+//
+// The regex also matches `detect.worker-*.js` because the Phase 5 Web-Worker
+// hotfix moved the HoughCircles call into a module worker. Depending on how
+// Vite chunks the graph, the opencv payload can end up in the SetupApp chunk
+// OR in the worker chunk — accepting both keeps the gate honest without
+// over-asserting the internal chunking strategy.
+const setupCandidates = jsFiles.filter((f) =>
+  /setup|SetupApp|detect\.worker/i.test(f),
+);
 let cvSetupChunk = null;
 for (const f of setupCandidates) {
   const content = readFileSync(resolve(dist, f), 'utf8').toLowerCase();
