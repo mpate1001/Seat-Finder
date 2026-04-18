@@ -45,8 +45,18 @@ function yieldToUi(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
-/** Status cutoff — OCR confidence below this flags the pin for review (D-09). */
-const LOW_CONFIDENCE_THRESHOLD = 60;
+/** Status cutoff — OCR confidence below this flags the pin for review (D-09).
+ *  Set to 40 (was 60) after UAT showed ~70% of correctly-read pins scored
+ *  in the 40-60 band with the 3× upscale + binarize preprocessing pipeline.
+ *  Tesseract's confidence metric runs systematically lower on binarized
+ *  line-art than on natural photography, so the original 60 cutoff —
+ *  reasonable for raw photographic crops — buried most correct reads in
+ *  the low-confidence bucket. 40 keeps the clearly-uncertain reads
+ *  (confidence < 40, typically genuinely ambiguous glyphs) flagged for
+ *  human review while promoting the confident-enough reads to OK. Raise
+ *  this if false-OK rate becomes a problem; lower if good reads still
+ *  land in low-confidence. */
+const LOW_CONFIDENCE_THRESHOLD = 40;
 
 /**
  * Runs the complete detection pipeline on an uploaded bitmap and returns a

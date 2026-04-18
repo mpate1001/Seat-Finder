@@ -33,8 +33,8 @@ export interface DraftPin {
   confidence: number;
   /**
    * Review-UI state (D-11):
-   * - `'ok'`              → OCR confidence ≥ 60 and a numeric tableNumber was read.
-   * - `'low-confidence'`  → OCR returned a number but confidence < 60 (warning badge).
+   * - `'ok'`              → OCR confidence ≥ 40 and a numeric tableNumber was read.
+   * - `'low-confidence'`  → OCR returned a number but confidence < 40 (warning badge).
    * - `'needs-number'`    → OCR returned no digits; admin must assign the number.
    */
   status: 'ok' | 'low-confidence' | 'needs-number';

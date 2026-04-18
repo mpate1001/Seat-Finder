@@ -200,7 +200,7 @@ describe('runDetectionPipeline', () => {
     expect(ids.size).toBe(3);
   });
 
-  it("sets status='ok' when confidence>=60 and digits parsed", async () => {
+  it("sets status='ok' when confidence>=40 and digits parsed", async () => {
     const { runDetectionPipeline } = await loadPipeline();
     pipelineState.setCircles([{ cx: 100, cy: 100, r: 20 }]);
     pipelineState.setOcrResults([{ text: '12', confidence: 88 }]);
@@ -210,10 +210,10 @@ describe('runDetectionPipeline', () => {
     expect(pins[0].confidence).toBe(88);
   });
 
-  it("sets status='low-confidence' when digits parsed but confidence < 60", async () => {
+  it("sets status='low-confidence' when digits parsed but confidence < 40", async () => {
     const { runDetectionPipeline } = await loadPipeline();
     pipelineState.setCircles([{ cx: 100, cy: 100, r: 20 }]);
-    pipelineState.setOcrResults([{ text: '7', confidence: 40 }]);
+    pipelineState.setOcrResults([{ text: '7', confidence: 25 }]);
     const pins = await runDetectionPipeline(fakeBitmap(600, 500), 'plan.png', () => {});
     expect(pins[0].status).toBe('low-confidence');
     expect(pins[0].tableNumber).toBe('7');
