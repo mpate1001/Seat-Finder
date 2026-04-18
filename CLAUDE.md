@@ -284,6 +284,54 @@ A mobile-first wedding guest seating app for Mahek & Saumya's reception in Newpo
 ## Cross-Cutting Concerns
 <!-- GSD:architecture-end -->
 
+<!-- GSD:phase-5-boundary-start -->
+## Setup tool module boundary (Phase 5)
+
+The admin-only `/setup` route lives under `src/setup/`. Its dependencies
+(`@techstark/opencv-js` + `tesseract.js`) add ~11 MB of WASM and OCR models
+to any bundle they end up in. Guests must NEVER download them.
+
+**Rule:** `@techstark/opencv-js` and `tesseract.js` may ONLY be imported from
+files under `src/setup/`. Importing either package from `src/components/`,
+`src/services/`, `src/App.tsx`, or `src/main.tsx` violates requirement TOOL-03
+and fails `scripts/verify-setup-split.mjs` at build time.
+
+**The one allowed boundary crossing:**
+
+```ts
+// src/main.tsx
+const SetupApp = lazy(() => import('./setup/SetupApp'));
+```
+
+`lazy(() => import('./setup/SetupApp'))` is the sole edge from the guest graph
+into `src/setup/`. Any other static `import … from './setup/…'` in a
+guest-graph file (anything reachable from `main.tsx` under the non-`/setup`
+path) pulls the setup tree into the guest bundle.
+
+**How the rule is enforced:**
+
+- `scripts/verify-setup-split.mjs` runs as the last step of `npm run build`
+  (after `verify-pwa-build.mjs`). It greps `dist/assets/index-*.js` for 6
+  forbidden tokens (`opencv`, `tesseract`, `HoughCircles`,
+  `tessedit_char_whitelist`, `runDetectionPipeline`, `DraftPin`) — any match
+  exits 1 and fails the build.
+- The same script positively asserts that a chunk matching `/setup|SetupApp/i`
+  exists and contains `opencv` or `tesseract`, so a regression where the
+  lazy import is accidentally tree-shaken into nothing also fails.
+
+**Why:** TOOL-03 keeps the guest entry bundle at ~224 KB (gzip ~73 KB) by
+isolating the ~11 MB setup chunk. The guest-facing bundle is the page
+guests fetch over cellular at the venue — every byte matters.
+
+**When adding new setup-tool code:** put it under `src/setup/` alongside
+`SetupApp.tsx`, `detect.ts`, `ocr.ts`, `ReviewCanvas.tsx`, etc. When adding
+new guest-path code: do NOT import anything from `src/setup/` (not even
+types — TypeScript will drop the import at runtime but the grep gate
+matches on token presence, which survives type-only imports inconsistently
+depending on `verbatimModuleSyntax`). Keep the two trees separate.
+<!-- GSD:phase-5-boundary-end -->
+
+
 <!-- GSD:skills-start source:skills/ -->
 ## Project Skills
 
