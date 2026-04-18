@@ -141,6 +141,7 @@ describe('recognizeCircles', () => {
     )!;
     expect(setParamCall.args[0]).toEqual({
       tessedit_char_whitelist: '0123456789',
+      tessedit_pageseg_mode: '8',
     });
   });
 

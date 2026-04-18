@@ -23,6 +23,11 @@ if (typeof window !== 'undefined' && !window.matchMedia) {
 // union). The setup-tooling tests mock tesseract.js so the fake worker never
 // reads canvas pixels — a minimal shape-matching polyfill is sufficient. In
 // the browser, the native OffscreenCanvas is used.
+//
+// Method coverage: `putImageData` + `drawImage` + `getImageData` +
+// `imageSmoothingEnabled`/`imageSmoothingQuality` — the surface the OCR
+// preprocessing pipeline (upscale + binarize) touches. All are no-ops that
+// return zero-filled ImageData — tests never assert on rendered pixels.
 if (typeof globalThis.OffscreenCanvas === 'undefined') {
   class OffscreenCanvasPolyfill {
     width: number;
@@ -31,11 +36,29 @@ if (typeof globalThis.OffscreenCanvas === 'undefined') {
       this.width = width;
       this.height = height;
     }
-    getContext(_contextId: string): { putImageData: (data: ImageData, dx: number, dy: number) => void } | null {
+    getContext(_contextId: string): {
+      putImageData: (data: ImageData, dx: number, dy: number) => void;
+      drawImage: (...args: unknown[]) => void;
+      getImageData: (x: number, y: number, w: number, h: number) => ImageData;
+      imageSmoothingEnabled: boolean;
+      imageSmoothingQuality: string;
+    } | null {
       return {
         putImageData: () => {
           /* no-op for test polyfill */
         },
+        drawImage: () => {
+          /* no-op for test polyfill */
+        },
+        getImageData: (_x: number, _y: number, w: number, h: number) =>
+          ({
+            width: w,
+            height: h,
+            data: new Uint8ClampedArray(w * h * 4),
+            colorSpace: 'srgb',
+          }) as ImageData,
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high',
       };
     }
   }
