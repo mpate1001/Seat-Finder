@@ -79,8 +79,8 @@ const TEARDROP_D =
 
 export default function ReviewCanvas({
   imageUrl,
-  imageNaturalWidth: _imageNaturalWidth,
-  imageNaturalHeight: _imageNaturalHeight,
+  imageNaturalWidth,
+  imageNaturalHeight,
   pins,
   selectedPinId,
   onChange,
@@ -311,6 +311,14 @@ export default function ReviewCanvas({
         className={`review-canvas ${addMode ? 'is-addmode' : ''}`}
         onPointerDown={onContainerPointerDown}
         data-testid="review-canvas-container"
+        // Inline aspect-ratio so the container tracks the uploaded image's
+        // proportions exactly. Combined with max-width: 100% and max-height:
+        // 85vh in the stylesheet, the container shrinks on the constrained
+        // axis and the other axis resolves via the aspect ratio — so the
+        // full image is always visible and % pin coords stay aligned.
+        style={{
+          aspectRatio: `${imageNaturalWidth} / ${imageNaturalHeight}`,
+        }}
       >
         <img
           src={imageUrl}

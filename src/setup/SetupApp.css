@@ -396,3 +396,51 @@
     font-size: 1.7rem;
   }
 }
+
+/* ===== LivePreview pane — contain the embedded FloorPlan component.
+   FloorPlan.css sets `.floor-plan-wrapper { min-width: 100vw; min-height: 100dvh }`
+   so it fills the viewport on the guest path. Inside the side-by-side review
+   grid we need the wrapper to size to its column (not the viewport) or it
+   blows the layout out horizontally. The overrides below scope only to the
+   preview container so the guest path is unaffected. ========================= */
+
+.live-preview-root {
+  width: 100%;
+  /* The source images are typically ~1.31:1. Give the pane a stable aspect
+     so the <picture>/<img> has something to size against before it loads. */
+  aspect-ratio: 2400 / 1831;
+  max-height: 60vh;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #edf2f4;
+}
+
+/* react-zoom-pan-pinch's generated wrapper div — fill the pane. */
+.live-preview-root .react-transform-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.live-preview-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.live-preview-root .react-transform-component {
+  width: 100%;
+  height: 100%;
+}
+
+/* Reset the guest-path viewport-anchored floor plan sizing so it fits the
+   pane's column instead of filling the window. */
+.live-preview-root .floor-plan-wrapper {
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: auto;
+}
+
+.live-preview-root .floor-plan-image {
+  width: 100%;
+  height: auto;
+}
