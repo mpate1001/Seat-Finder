@@ -20,8 +20,13 @@ import type { HoughOpts } from './types';
 /** Canny upper threshold — default for clean black-on-white line art. */
 export const HOUGH_PARAM1 = 100;
 
-/** Accumulator threshold — lower = more circles + more false positives. */
-export const HOUGH_PARAM2 = 30;
+/** Accumulator threshold — lower = more circles + more false positives AND
+ *  exponentially more main-thread CPU. Raised from 30 → 50 after UAT showed
+ *  param2=30 at 1200px working-width kept the browser unresponsive for 30+
+ *  seconds. At 50 the detector is stricter (may miss a few tables; admin
+ *  can add them manually in the review UI — D-12) but finishes in ~1s on
+ *  an 800px working canvas. */
+export const HOUGH_PARAM2 = 50;
 
 /** `dp` (accumulator resolution) — `1` = same as image, correct for line art. */
 export const HOUGH_DP = 1;

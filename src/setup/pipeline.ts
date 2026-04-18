@@ -30,12 +30,12 @@ import type { DraftPin, PipelineProgress } from './types';
  *  the source bitmap is downscaled via createImageBitmap before detection.
  *  Hough Circle Transform is O(N²) in pixels AND blocks the main thread;
  *  at 3000px a single admin upload triggered Chrome's "page unresponsive"
- *  watchdog. 1200px is the empirical sweet spot: still enough resolution to
- *  separate adjacent tables (~24px minDist at this scale) while finishing
- *  Hough in ~2-4 seconds. Downstream crops are scaled back to the source
- *  bitmap's fractions at export time (D-07), so the smaller working canvas
- *  doesn't affect export precision. */
-const MAX_DIMENSION = 1200;
+ *  watchdog. 1200px still froze the tab for >30s. 800px is the empirical
+ *  sweet spot: tables are still ~30px across so Hough can separate them,
+ *  and the full pipeline finishes in ~1-2 seconds. Downstream crops are
+ *  scaled back to the source bitmap's fractions at export time (D-07), so
+ *  the smaller working canvas doesn't affect export precision. */
+const MAX_DIMENSION = 800;
 
 /** Yield to the browser's event loop so "Detecting..." / progress paints and
  *  the "page unresponsive" watchdog resets. */
