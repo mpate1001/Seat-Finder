@@ -35,7 +35,7 @@ import type { DraftPin, PipelineProgress } from './types';
  *  and the full pipeline finishes in ~1-2 seconds. Downstream crops are
  *  scaled back to the source bitmap's fractions at export time (D-07), so
  *  the smaller working canvas doesn't affect export precision. */
-const MAX_DIMENSION = 800;
+const MAX_DIMENSION = 600;
 
 /** Yield to the browser's event loop so "Detecting..." / progress paints and
  *  the "page unresponsive" watchdog resets. */

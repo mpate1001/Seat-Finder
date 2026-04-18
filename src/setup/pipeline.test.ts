@@ -141,7 +141,7 @@ describe('runDetectionPipeline', () => {
     pipelineState.setOcrResults([{ text: '1', confidence: 90 }]);
 
     const stages: string[] = [];
-    await runDetectionPipeline(fakeBitmap(800, 600), 'plan.png', (p) => {
+    await runDetectionPipeline(fakeBitmap(600, 500), 'plan.png', (p) => {
       stages.push(p.stage);
     });
 
@@ -204,7 +204,7 @@ describe('runDetectionPipeline', () => {
     const { runDetectionPipeline } = await loadPipeline();
     pipelineState.setCircles([{ cx: 100, cy: 100, r: 20 }]);
     pipelineState.setOcrResults([{ text: '12', confidence: 88 }]);
-    const pins = await runDetectionPipeline(fakeBitmap(800, 600), 'plan.png', () => {});
+    const pins = await runDetectionPipeline(fakeBitmap(600, 500), 'plan.png', () => {});
     expect(pins[0].status).toBe('ok');
     expect(pins[0].tableNumber).toBe('12');
     expect(pins[0].confidence).toBe(88);
@@ -214,7 +214,7 @@ describe('runDetectionPipeline', () => {
     const { runDetectionPipeline } = await loadPipeline();
     pipelineState.setCircles([{ cx: 100, cy: 100, r: 20 }]);
     pipelineState.setOcrResults([{ text: '7', confidence: 40 }]);
-    const pins = await runDetectionPipeline(fakeBitmap(800, 600), 'plan.png', () => {});
+    const pins = await runDetectionPipeline(fakeBitmap(600, 500), 'plan.png', () => {});
     expect(pins[0].status).toBe('low-confidence');
     expect(pins[0].tableNumber).toBe('7');
   });
@@ -223,7 +223,7 @@ describe('runDetectionPipeline', () => {
     const { runDetectionPipeline } = await loadPipeline();
     pipelineState.setCircles([{ cx: 100, cy: 100, r: 20 }]);
     pipelineState.setOcrResults([{ text: '', confidence: 90 }]);
-    const pins = await runDetectionPipeline(fakeBitmap(800, 600), 'plan.png', () => {});
+    const pins = await runDetectionPipeline(fakeBitmap(600, 500), 'plan.png', () => {});
     expect(pins[0].status).toBe('needs-number');
     expect(pins[0].tableNumber).toBeNull();
   });
@@ -233,7 +233,7 @@ describe('runDetectionPipeline', () => {
     pipelineState.setCircles([{ cx: 100, cy: 100, r: 20 }]);
     // Simulate a whitelist-leak edge case — text contains a stray letter.
     pipelineState.setOcrResults([{ text: '4a2', confidence: 75 }]);
-    const pins = await runDetectionPipeline(fakeBitmap(800, 600), 'plan.png', () => {});
+    const pins = await runDetectionPipeline(fakeBitmap(600, 500), 'plan.png', () => {});
     expect(pins[0].tableNumber).toBe('42');
     expect(pins[0].status).toBe('ok');
   });
@@ -253,7 +253,7 @@ describe('runDetectionPipeline', () => {
     pipelineState.setEmitOcrProgress(true);
 
     const ocrProgress: Array<{ done?: number; total?: number }> = [];
-    await runDetectionPipeline(fakeBitmap(800, 600), 'plan.png', (p) => {
+    await runDetectionPipeline(fakeBitmap(600, 500), 'plan.png', (p) => {
       // Filter out the bootstrap `done:0` tick emitted BEFORE the OCR loop
       // starts — we're asserting the per-recognize forwarded ticks.
       if (p.stage === 'ocr' && typeof p.done === 'number' && p.done > 0) {
@@ -267,13 +267,13 @@ describe('runDetectionPipeline', () => {
     ]);
   });
 
-  it('downscales bitmaps exceeding 800px via createImageBitmap (Pitfall 4)', async () => {
+  it('downscales bitmaps exceeding 600px via createImageBitmap (Pitfall 4)', async () => {
     const { runDetectionPipeline } = await loadPipeline();
     pipelineState.setCircles([]);
     pipelineState.setOcrResults([]);
 
     // globalThis.createImageBitmap is not available in jsdom; stub + spy.
-    const downscaled = fakeBitmap(800, 600);
+    const downscaled = fakeBitmap(600, 458);
     const createImageBitmapSpy = vi.fn(async () => downscaled);
     (globalThis as unknown as { createImageBitmap: typeof createImageBitmapSpy }).createImageBitmap =
       createImageBitmapSpy;
@@ -290,16 +290,16 @@ describe('runDetectionPipeline', () => {
       { resizeWidth: number; resizeQuality: string },
     ];
     expect(source.width).toBe(3300);
-    expect(opts.resizeWidth).toBe(800);
+    expect(opts.resizeWidth).toBe(600);
     expect(opts.resizeQuality).toBe('high');
   });
 
-  it('does NOT downscale bitmaps under 800px', async () => {
+  it('does NOT downscale bitmaps under 600px', async () => {
     const { runDetectionPipeline } = await loadPipeline();
     pipelineState.setCircles([]);
     pipelineState.setOcrResults([]);
 
-    const createImageBitmapSpy = vi.fn(async () => fakeBitmap(800, 600));
+    const createImageBitmapSpy = vi.fn(async () => fakeBitmap(600, 500));
     (globalThis as unknown as { createImageBitmap: typeof createImageBitmapSpy }).createImageBitmap =
       createImageBitmapSpy;
 
@@ -313,7 +313,7 @@ describe('runDetectionPipeline', () => {
     pipelineState.setCircles([{ cx: 5, cy: 5, r: 20 }]);
     pipelineState.setOcrResults([{ text: '1', confidence: 80 }]);
 
-    await runDetectionPipeline(fakeBitmap(800, 600), 'plan.png', () => {});
+    await runDetectionPipeline(fakeBitmap(600, 500), 'plan.png', () => {});
     expect(pipelineState.getImageDataCalls).toHaveLength(1);
     const [x, y] = pipelineState.getImageDataCalls[0];
     expect(x).toBeGreaterThanOrEqual(0);

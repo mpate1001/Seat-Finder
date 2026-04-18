@@ -26,19 +26,25 @@ export const HOUGH_PARAM1 = 100;
  *  seconds. At 50 the detector is stricter (may miss a few tables; admin
  *  can add them manually in the review UI — D-12) but finishes in ~1s on
  *  an 800px working canvas. */
-export const HOUGH_PARAM2 = 50;
+export const HOUGH_PARAM2 = 80;
 
 /** `dp` (accumulator resolution) — `1` = same as image, correct for line art. */
 export const HOUGH_DP = 1;
 
-/** Fraction of image width used as `minDist` (centers closer than this merge). */
-export const MIN_DIST_FRACTION = 0.03;
+/** Fraction of image width used as `minDist` (centers closer than this merge).
+ *  Tightened 0.03 → 0.06 after UAT: tables in a wedding hall are typically
+ *  further apart than 3% of image width, and raising the floor prunes
+ *  many redundant accumulator peaks that Hough would otherwise evaluate. */
+export const MIN_DIST_FRACTION = 0.06;
 
-/** Fraction of image width used as `minRadius` (smallest plausible table). */
-export const MIN_RADIUS_FRACTION = 0.012;
+/** Fraction of image width used as `minRadius` (smallest plausible table).
+ *  Narrowed 0.012 → 0.03 to match real table sizes on a typical floor plan
+ *  (~5-8% of image width per table). Fewer candidate radii = faster Hough. */
+export const MIN_RADIUS_FRACTION = 0.03;
 
-/** Fraction of image width used as `maxRadius` (largest plausible table). */
-export const MAX_RADIUS_FRACTION = 0.035;
+/** Fraction of image width used as `maxRadius` (largest plausible table).
+ *  Narrowed 0.035 → 0.06 — same narrowing logic as MIN_RADIUS_FRACTION. */
+export const MAX_RADIUS_FRACTION = 0.06;
 
 /**
  * Build the default Hough parameter set scaled to the supplied image width.

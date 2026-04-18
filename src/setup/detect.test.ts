@@ -249,8 +249,8 @@ describe('detectCircles', () => {
     });
     // Guard the concrete numbers documented in 05-02-calibration.md so a
     // future unrelated DEFAULT_HOUGH tweak can't silently drift.
-    expect(expected.minRadius).toBe(12);
-    expect(expected.maxRadius).toBe(35);
+    expect(expected.minRadius).toBe(30);
+    expect(expected.maxRadius).toBe(60);
   });
 
   it('honours a caller-supplied opts override', async () => {
