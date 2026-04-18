@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 05-06-PLAN.md (Approve + byte-equivalent export, TOOL-02 contract proven)
-last_updated: "2026-04-17T22:28:57.826Z"
-last_activity: 2026-04-17
+status: verifying
+stopped_at: "Phase 5 Plan 07 autonomous tasks complete (3/3 committed: a949d3f, d75d97c, eb2dfb4); awaiting admin UAT on 05-UAT.md (Task 4 checkpoint:human-verify)"
+last_updated: "2026-04-18T18:29:59.986Z"
+last_activity: 2026-04-18
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 24
-  completed_plans: 22
-  percent: 92
+  completed_plans: 23
+  percent: 96
 ---
 
 # Project State
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-04-12)
 
 Phase: 05 (setup-tooling) — EXECUTING
 Plan: 7 of 7
-Status: Ready to execute
-Last activity: 2026-04-17
+Status: Phase complete — ready for verification
+Last activity: 2026-04-18
 
 Progress: [████████░░] 83%
 
@@ -65,6 +65,7 @@ Progress: [████████░░] 83%
 | Phase 05-setup-tooling P04 | 10min | 3 tasks | 7 files |
 | Phase 05-setup-tooling P05 | 12min | 3 tasks | 13 files |
 | Phase 05-setup-tooling P06 | 5min | 3 tasks | 9 files |
+| Phase 05-setup-tooling P07 | 6min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -109,6 +110,9 @@ Recent decisions affecting current work:
 - [Phase 05-setup-tooling]: Plan 05-06: serializeFloorPlanConfig uses toFixed(4), not raw numeric interpolation — committed floorPlan.json preserves trailing zeros (0.2770 not 0.277) and JSON.stringify drops them
 - [Phase 05-setup-tooling]: Plan 05-06: duplicate-id validation emits one error per offending pin (not per collision) so the UI highlights every member of the collision group (D-15 'for EACH duplicate pin')
 - [Phase 05-setup-tooling]: Plan 05-06: byte-equivalence fixture pattern — read ground-truth file, reverse into DraftPin[], rebuild via the production pipeline, assert strict equality with actionable line-level diff on failure
+- [Phase 05-setup-tooling]: Phase 5 Plan 7: verify-setup-split.mjs forbidden list is narrow (opencv, tesseract, HoughCircles, tessedit_char_whitelist, runDetectionPipeline, DraftPin); dropped createWorker (too generic) and SetupApp (minifier-renamed)
+- [Phase 05-setup-tooling]: Phase 5 Plan 7: positive CV-chunk assertion (at least one /setup|SetupApp/i chunk must contain opencv or tesseract) is non-negotiable — guards against tree-shaken-to-nothing regression where forbidden-list-only gate would silently pass
+- [Phase 05-setup-tooling]: Phase 5 Plan 7: CLAUDE.md Setup-tool boundary rule wrapped in GSD:phase-5-boundary-start/end markers so it survives CLAUDE.md regenerations (Phase 4 convention for preserved sections)
 
 ### Pending Todos
 
@@ -121,6 +125,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-17T22:28:46.636Z
-Stopped at: Completed 05-06-PLAN.md (Approve + byte-equivalent export, TOOL-02 contract proven)
+Last session: 2026-04-18T18:29:59.981Z
+Stopped at: Phase 5 Plan 07 autonomous tasks complete (3/3 committed: a949d3f, d75d97c, eb2dfb4); awaiting admin UAT on 05-UAT.md (Task 4 checkpoint:human-verify)
 Resume file: None
