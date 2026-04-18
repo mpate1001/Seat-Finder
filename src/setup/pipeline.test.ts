@@ -262,19 +262,19 @@ describe('runDetectionPipeline', () => {
     ]);
   });
 
-  it('downscales bitmaps exceeding 3000px via createImageBitmap (Pitfall 4)', async () => {
+  it('downscales bitmaps exceeding 1200px via createImageBitmap (Pitfall 4)', async () => {
     const { runDetectionPipeline } = await loadPipeline();
     pipelineState.setCircles([]);
     pipelineState.setOcrResults([]);
 
     // globalThis.createImageBitmap is not available in jsdom; stub + spy.
-    const downscaled = fakeBitmap(3000, 2250);
+    const downscaled = fakeBitmap(1200, 900);
     const createImageBitmapSpy = vi.fn(async () => downscaled);
     (globalThis as unknown as { createImageBitmap: typeof createImageBitmapSpy }).createImageBitmap =
       createImageBitmapSpy;
 
     await runDetectionPipeline(
-      fakeBitmap(4000, 3000),
+      fakeBitmap(3300, 2517),
       'big.png',
       () => {},
     );
@@ -284,21 +284,21 @@ describe('runDetectionPipeline', () => {
       ImageBitmap,
       { resizeWidth: number; resizeQuality: string },
     ];
-    expect(source.width).toBe(4000);
-    expect(opts.resizeWidth).toBe(3000);
+    expect(source.width).toBe(3300);
+    expect(opts.resizeWidth).toBe(1200);
     expect(opts.resizeQuality).toBe('high');
   });
 
-  it('does NOT downscale bitmaps under 3000px', async () => {
+  it('does NOT downscale bitmaps under 1200px', async () => {
     const { runDetectionPipeline } = await loadPipeline();
     pipelineState.setCircles([]);
     pipelineState.setOcrResults([]);
 
-    const createImageBitmapSpy = vi.fn(async () => fakeBitmap(3000, 3000));
+    const createImageBitmapSpy = vi.fn(async () => fakeBitmap(1200, 900));
     (globalThis as unknown as { createImageBitmap: typeof createImageBitmapSpy }).createImageBitmap =
       createImageBitmapSpy;
 
-    await runDetectionPipeline(fakeBitmap(2000, 1500), 'small.png', () => {});
+    await runDetectionPipeline(fakeBitmap(900, 700), 'small.png', () => {});
     expect(createImageBitmapSpy).not.toHaveBeenCalled();
   });
 

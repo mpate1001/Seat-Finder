@@ -27,8 +27,21 @@ import { recognizeCircles } from './ocr';
 import type { DraftPin, PipelineProgress } from './types';
 
 /** Largest dimension (long edge, pixels) the pipeline will process. Above this
- *  the source bitmap is downscaled via createImageBitmap before detection. */
-const MAX_DIMENSION = 3000;
+ *  the source bitmap is downscaled via createImageBitmap before detection.
+ *  Hough Circle Transform is O(N²) in pixels AND blocks the main thread;
+ *  at 3000px a single admin upload triggered Chrome's "page unresponsive"
+ *  watchdog. 1200px is the empirical sweet spot: still enough resolution to
+ *  separate adjacent tables (~24px minDist at this scale) while finishing
+ *  Hough in ~2-4 seconds. Downstream crops are scaled back to the source
+ *  bitmap's fractions at export time (D-07), so the smaller working canvas
+ *  doesn't affect export precision. */
+const MAX_DIMENSION = 1200;
+
+/** Yield to the browser's event loop so "Detecting..." / progress paints and
+ *  the "page unresponsive" watchdog resets. */
+function yieldToUi(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
 
 /** Status cutoff — OCR confidence below this flags the pin for review (D-09). */
 const LOW_CONFIDENCE_THRESHOLD = 60;
@@ -77,9 +90,14 @@ export async function runDetectionPipeline(
   ctx.drawImage(work, 0, 0);
 
   onProgress({ stage: 'scanning', message: 'Scanning for circles...' });
+  // Yield before Hough so the "Scanning..." message actually paints before
+  // the CV call blocks the main thread. Without this the first frame the
+  // admin sees after clicking Detect is whatever was on screen pre-click.
+  await yieldToUi();
   const circles = await detectCircles(canvas);
 
   onProgress({ stage: 'cropping', message: 'Cropping circles...' });
+  await yieldToUi();
   const crops: ImageData[] = circles.map((c) => {
     // Clamp the crop rect inside the canvas so a circle near the edge does
     // not cause getImageData to throw (x/y < 0 or x+side > width).
