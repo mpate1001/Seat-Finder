@@ -1,0 +1,70 @@
+/* UpdateToast.css — bottom-pinned slim toast prompting the user to reload.
+   Palette: navy bg (#2b2d42), white text (#edf2f4), red CTA (#d90429).
+   Safe-area-aware for iOS notch/home-indicator. Renders via createPortal
+   to document.body so it escapes any containing block. */
+
+@keyframes slideUpToast {
+  from {
+    transform: translate(-50%, 24px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+.update-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  max-width: calc(100vw - 32px);
+  background: #2b2d42;
+  color: #edf2f4;
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  animation: slideUpToast 0.2s ease-out;
+  font-size: 14px;
+}
+
+.update-toast-text {
+  white-space: nowrap;
+}
+
+.update-toast-btn {
+  background: #d90429;
+  color: #ffffff;
+  border: 0;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  min-height: 32px;
+  transition: background 0.2s ease;
+}
+
+.update-toast-btn:hover,
+.update-toast-btn:focus-visible {
+  background: #b8031f;
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .update-toast {
+    animation: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .update-toast {
+    font-size: 13px;
+    padding: 9px 12px;
+  }
+}

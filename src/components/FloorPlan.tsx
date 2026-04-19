@@ -1,165 +1,188 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useRef } from 'react';
+import { useTransformComponent } from 'react-zoom-pan-pinch';
 import './FloorPlan.css';
 import floorPlanConfig from '../config/floorPlan.json';
-// Import floor plan image - update this import when changing the floor plan image
-import floorPlanImageSrc from '../assets/Reception Seat Diagram.png';
-
-interface FloorPlanProps {
-  tableNumber: string;
-}
 
 interface TablePosition {
   x: number;
   y: number;
 }
 
-interface FloorPlanConfig {
+// Exported so setup tooling (plans 05-05 LivePreview + 05-06 exportConfig) can
+// import the single-source-of-truth config contract. Guest path and setup path
+// both flow through this interface — widening it requires updating both.
+export interface FloorPlanConfig {
   imageFileName: string;
-  canvasWidth: number;
-  canvasHeight: number;
   tablePositions: Record<string, TablePosition>;
 }
 
-const config: FloorPlanConfig = floorPlanConfig;
+interface FloorPlanProps {
+  tableNumber: string;
+  // Forwarded by MapView: the ref is attached to the assigned table's pin div
+  // so the zoom animation can target it. Typed as React.Ref (not React.RefObject)
+  // so a MutableRefObject from useRef<HTMLDivElement | null>(null) and callback
+  // refs both satisfy the intrinsic <div ref={...}> prop under React 18 strict.
+  assignedPinRef: React.Ref<HTMLDivElement>;
+  onImageLoad: () => void;
+  // Optional — when omitted, falls back to the imported floorPlan.json so the
+  // guest code path behaves byte-identically. Setup's LivePreview passes a
+  // synthetic config derived from draft pins (D-13).
+  config?: FloorPlanConfig;
+  // Optional — when provided, a plain <img src={imageSrc}/> is rendered
+  // instead of the <picture> with AVIF/WebP/PNG srcsets. Setup's LivePreview
+  // passes a blob: URL produced from the admin-uploaded file.
+  imageSrc?: string;
+}
 
-export default function FloorPlan({ tableNumber }: FloorPlanProps) {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageWidth, setImageWidth] = useState(0);
-  const [isEnlarged, setIsEnlarged] = useState(false);
-  const [enlargedDimensions, setEnlargedDimensions] = useState({ width: 0, height: 0, offsetX: 0, offsetY: 0 });
-  const position = config.tablePositions[tableNumber];
-  const hasValidPosition = Boolean(position);
+const defaultConfig: FloorPlanConfig = floorPlanConfig;
 
-  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    setImageWidth(e.currentTarget.offsetWidth);
-    setImageLoaded(true);
-  };
+const AVIF_SRCSET =
+  '/floor-plan/floor-plan-900.avif 900w, /floor-plan/floor-plan-1600.avif 1600w, /floor-plan/floor-plan-2400.avif 2400w';
+const WEBP_SRCSET =
+  '/floor-plan/floor-plan-900.webp 900w, /floor-plan/floor-plan-1600.webp 1600w, /floor-plan/floor-plan-2400.webp 2400w';
+const PNG_SRCSET =
+  '/floor-plan/floor-plan-900.png 900w, /floor-plan/floor-plan-1600.png 1600w, /floor-plan/floor-plan-2400.png 2400w';
+const PNG_FALLBACK_SRC = '/floor-plan/floor-plan-1600.png';
 
-  const handleEnlargedImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.currentTarget;
-    const containerWidth = img.parentElement?.offsetWidth || 0;
-    const containerHeight = img.parentElement?.offsetHeight || 0;
-
-    // Calculate actual displayed dimensions with object-fit: contain
-    const imageAspect = config.canvasWidth / config.canvasHeight;
-    const containerAspect = containerWidth / containerHeight;
-
-    let displayWidth, displayHeight, offsetX, offsetY;
-
-    if (imageAspect > containerAspect) {
-      // Image is wider - constrained by width
-      displayWidth = containerWidth;
-      displayHeight = containerWidth / imageAspect;
-      offsetX = 0;
-      offsetY = (containerHeight - displayHeight) / 2;
+/**
+ * Returns one warning string per duplicate (x,y) coordinate pair in the
+ * supplied config. Extracted from the component body so tests can assert
+ * behavior without mocking `import.meta.env.DEV`. Called from within the
+ * component behind a DEV gate; called directly by tests.
+ *
+ * Exporting a plain function from this component module violates the
+ * react-refresh/only-export-components rule, but this is intentional: the
+ * pure helper is used by the DEV warning branch and by unit tests. HMR fast
+ * refresh works correctly for the component default export either way.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function warnDuplicatePositions(config: FloorPlanConfig): string[] {
+  const warnings: string[] = [];
+  const seen = new Map<string, string>();
+  for (const [id, pos] of Object.entries(config.tablePositions)) {
+    const key = `${pos.x.toFixed(4)},${pos.y.toFixed(4)}`;
+    const prior = seen.get(key);
+    if (prior !== undefined) {
+      warnings.push(`Duplicate table position: ${id} and ${prior} at ${key}`);
     } else {
-      // Image is taller - constrained by height
-      displayHeight = containerHeight;
-      displayWidth = containerHeight * imageAspect;
-      offsetX = (containerWidth - displayWidth) / 2;
-      offsetY = 0;
+      seen.set(key, id);
     }
+  }
+  return warnings;
+}
 
-    setEnlargedDimensions({ width: displayWidth, height: displayHeight, offsetX, offsetY });
-  };
+// Module-load DEV warning for the DEFAULT (imported JSON) config — retained
+// from Phase 1 as a bundle-time regression guard. The component body adds a
+// per-effective-config warning pass for setup-path live-preview configs.
+if (import.meta.env.DEV) {
+  for (const msg of warnDuplicatePositions(defaultConfig)) {
+    console.warn(msg);
+  }
+}
 
-  const handleEnlarge = () => {
-    setIsEnlarged(true);
-  };
-
-  const handleClose = useCallback(() => {
-    setIsEnlarged(false);
-  }, []);
-
-  // Handle escape key to close enlarged view
-  useEffect(() => {
-    if (!isEnlarged) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleClose();
+export default function FloorPlan({
+  tableNumber,
+  assignedPinRef,
+  onImageLoad,
+  config = defaultConfig,
+  imageSrc,
+}: FloorPlanProps) {
+  // DEV: warn once per distinct effective config identity. A ref-backed Set
+  // gates the call so guest renders (config === defaultConfig, stable) emit at
+  // most one warning, and setup renders only re-warn when the memoized config
+  // object actually changes (pin add/delete/drag → new object from useMemo).
+  const warnedConfigsRef = useRef<Set<FloorPlanConfig>>(new Set());
+  if (import.meta.env.DEV && !warnedConfigsRef.current.has(config)) {
+    warnedConfigsRef.current.add(config);
+    // Skip re-emitting for the defaultConfig: module-load already warned once
+    // for it above; a second pass here would double-log in DEV.
+    if (config !== defaultConfig) {
+      for (const msg of warnDuplicatePositions(config)) {
+        console.warn(msg);
       }
-    };
+    }
+  }
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isEnlarged, handleClose]);
-
-  // Calculate scaling factor based on displayed image width vs original width
-  const scaleFactor = imageWidth / config.canvasWidth;
-  const enlargedScaleFactor = enlargedDimensions.width / config.canvasWidth;
-
-  return (
-    <>
-      <div className="floor-plan-container">
-        <div className="floor-plan-header">
-          <h3>You're seated at Table {tableNumber}</h3>
-        </div>
-
-        <div className="canvas-container" onClick={handleEnlarge} style={{ cursor: 'pointer' }}>
+  // Adaptive label visibility (D-09). useTransformComponent re-runs cheaply on every
+  // transform state change; we toggle a single class on the wrapper and let CSS drive
+  // the fade (no per-marker re-render).
+  return useTransformComponent(({ state }) => {
+    const labelsVisible = state.scale >= 1.8;
+    return (
+      <div
+        className={`floor-plan-wrapper ${labelsVisible ? 'labels-visible' : ''}`}
+      >
+        {imageSrc !== undefined ? (
+          // Setup live-preview branch — admin-uploaded blob/object URL. No
+          // srcset, no AVIF/WebP variants: the admin's source image is what
+          // the preview must show pixel-for-pixel.
           <img
-            src={floorPlanImageSrc}
-            alt="Reception Floor Plan"
+            src={imageSrc}
+            alt="Floor plan preview"
+            loading="eager"
+            decoding="async"
+            onLoad={onImageLoad}
+            ref={(el) => {
+              if (el && el.complete && el.naturalWidth > 0) onImageLoad();
+            }}
             className="floor-plan-image"
-            onLoad={handleImageLoad}
           />
-
-          {imageLoaded && position && scaleFactor > 0 && (
+        ) : (
+          <picture>
+            <source type="image/avif" srcSet={AVIF_SRCSET} sizes="100vw" />
+            <source type="image/webp" srcSet={WEBP_SRCSET} sizes="100vw" />
+            <img
+              src={PNG_FALLBACK_SRC}
+              srcSet={PNG_SRCSET}
+              sizes="100vw"
+              alt="Reception floor plan"
+              loading="eager"
+              decoding="async"
+              onLoad={onImageLoad}
+              ref={(el) => {
+                // If the browser already has the image cached (e.g. from the
+                // preload link in App.tsx), the onLoad event never fires because
+                // it completed before React attached the handler. Fire manually.
+                if (el && el.complete && el.naturalWidth > 0) onImageLoad();
+              }}
+              className="floor-plan-image"
+            />
+          </picture>
+        )}
+        {Object.entries(config.tablePositions).map(([id, pos]) => {
+          // Only render the assigned table's pin. Non-assigned tables keep
+          // their numbers visible from the printed floor-plan image —
+          // overlaying slate dots obscured the image's own labels.
+          if (id !== tableNumber) return null;
+          return (
             <div
-              className="point-marker"
-              data-table-id={tableNumber}
+              key={id}
+              ref={assignedPinRef}
+              className="pin-assigned"
+              data-table-id={id}
               style={{
-                left: `${position.x * scaleFactor}px`,
-                top: `${position.y * scaleFactor}px`,
+                left: `${pos.x * 100}%`,
+                top: `${pos.y * 100}%`,
               }}
             >
-              <div className="point-pulse" />
+              <span className="pin-pulse-ring" aria-hidden="true" />
+              <svg
+                className="pin-assigned-svg"
+                viewBox="0 0 36 44"
+                aria-hidden="true"
+              >
+                <path
+                  d="M18 0 C8 0 0 8 0 18 C0 28 18 44 18 44 C18 44 36 28 36 18 C36 8 28 0 18 0 Z"
+                  fill="#d90429"
+                  stroke="#ffffff"
+                  strokeWidth="2"
+                />
+              </svg>
+              <span className="pin-assigned-number">{id}</span>
             </div>
-          )}
-        </div>
-
-        <div className="floor-plan-legend">
-          {hasValidPosition ? (
-            <p>Click map to enlarge • Look for the pulsing red circle</p>
-          ) : (
-            <p className="floor-plan-warning">Table location not mapped - please ask staff for assistance</p>
-          )}
-        </div>
+          );
+        })}
       </div>
-
-      {isEnlarged && (
-        <div className="floor-plan-enlarged-overlay" onClick={handleClose}>
-          <div className="floor-plan-enlarged-content" onClick={(e) => e.stopPropagation()}>
-            <button className="floor-plan-close-button" onClick={handleClose}>
-              &times;
-            </button>
-            <div className="floor-plan-enlarged-header">
-              <h3>Table {tableNumber}</h3>
-            </div>
-            <div className="canvas-container-enlarged">
-              <img
-                src={floorPlanImageSrc}
-                alt="Reception Floor Plan - Enlarged"
-                className="floor-plan-image-enlarged"
-                onLoad={handleEnlargedImageLoad}
-              />
-
-              {imageLoaded && position && enlargedScaleFactor > 0 && (
-                <div
-                  className="point-marker"
-                  data-table-id={tableNumber}
-                  style={{
-                    left: `${enlargedDimensions.offsetX + (position.x * enlargedScaleFactor)}px`,
-                    top: `${enlargedDimensions.offsetY + (position.y * enlargedScaleFactor)}px`,
-                  }}
-                >
-                  <div className="point-pulse" />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
+    );
+  });
 }

@@ -1,0 +1,446 @@
+/*
+ * Setup-tool shell styles. Scoped under the `.setup-` prefix so they cannot
+ * accidentally collide with the guest app's `.app-`, `.card`, `.floor-plan-`,
+ * or `.map-view-` families (CLAUDE.md convention). The setup tool is utility,
+ * not ceremony — we intentionally DO NOT reuse the wedding background image
+ * from App.tsx. A plain Seat-Finder slate background keeps the admin surface
+ * visually distinct from the guest flow.
+ *
+ * Plan 05-05 adds the review layout: the card widens to accommodate the
+ * two-pane side-by-side review canvas + live preview on desktop, and stacks
+ * on mobile.
+ */
+
+.setup-app {
+  min-height: 100vh;
+  width: 100%;
+  background: #edf2f4;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 20px;
+}
+
+.setup-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 40px 30px;
+  box-shadow: 0 10px 30px rgba(43, 45, 66, 0.12);
+  width: 100%;
+  max-width: 1200px;
+  border: 1px solid rgba(141, 153, 174, 0.25);
+}
+
+.setup-card h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2b2d42;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.setup-subtitle {
+  font-size: 0.95rem;
+  color: #8d99ae;
+  text-align: center;
+  margin-bottom: 28px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* ===== Error card (App.tsx error-card pattern) ===== */
+
+.setup-error-card {
+  background: #fff5f5;
+  border: 1px solid #f5a623;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  color: #5d4200;
+  font-size: 0.95rem;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.setup-error-card p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.setup-retry-button {
+  align-self: flex-start;
+  padding: 8px 14px;
+  background: #ef233c;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.setup-retry-button:hover {
+  background: #d90429;
+}
+
+/* ===== FileDrop ===== */
+
+.setup-file-drop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  border: 2px dashed #8d99ae;
+  border-radius: 14px;
+  background: #fafbfc;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  padding: 20px;
+  text-align: center;
+}
+
+.setup-file-drop:hover {
+  background: #f2f5f8;
+  border-color: #2b2d42;
+}
+
+.setup-file-drop-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.setup-file-drop-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #2b2d42;
+  font-size: 1rem;
+}
+
+.setup-file-drop-copy strong {
+  font-size: 1.05rem;
+}
+
+.setup-file-drop-copy span {
+  color: #8d99ae;
+  font-size: 0.9rem;
+}
+
+/* ===== Pre-flight (upload shown, no detect yet) ===== */
+
+.setup-preflight {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.setup-preflight-filename {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #2b2d42;
+  line-height: 1.4;
+}
+
+.setup-preflight-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.setup-detect-button {
+  padding: 12px 20px;
+  background: #ef233c;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.setup-detect-button:hover:not(:disabled) {
+  background: #d90429;
+}
+
+.setup-detect-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.setup-reupload-button {
+  padding: 12px 20px;
+  background: #ffffff;
+  color: #2b2d42;
+  border: 1px solid #8d99ae;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.setup-reupload-button:hover:not(:disabled) {
+  background: #edf2f4;
+  border-color: #2b2d42;
+}
+
+.setup-reupload-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.setup-status-line {
+  margin: 0;
+  padding: 10px 14px;
+  background: #eef2ff;
+  border-radius: 8px;
+  color: #2b2d42;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* ===== Review (two-pane layout) ===== */
+
+.setup-review {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.setup-review-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  background: #edf2f4;
+  border-radius: 10px;
+}
+
+.setup-review-summary-headline {
+  margin: 0;
+  color: #2b2d42;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.setup-review-summary-counts {
+  margin: 0;
+  font-size: 0.9rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.setup-count {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.setup-count--ok {
+  background: #d4edda;
+  color: #155724;
+}
+
+.setup-count--low {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.setup-count--needs {
+  background: #d1d8e0;
+  color: #2b2d42;
+}
+
+.setup-review-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.setup-review-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0; /* allow inner content to shrink instead of overflow */
+}
+
+.setup-pane-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2b2d42;
+}
+
+.setup-review-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  border-top: 1px solid rgba(141, 153, 174, 0.25);
+  padding-top: 16px;
+}
+
+.setup-approve-button {
+  padding: 12px 20px;
+  background: #2b2d42;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.setup-approve-button:hover:not(:disabled) {
+  background: #1f2132;
+}
+
+.setup-approve-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ===== Validation error banner (D-15) — shown above the review canvas
+   when Approve fails so the admin can click into each offending pin. */
+
+.setup-validation-errors {
+  background: #fff5f5;
+  border: 1px solid #ef233c;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #5d1a24;
+}
+
+.setup-validation-errors-headline {
+  margin: 0 0 8px;
+  color: #d90429;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.setup-validation-errors-list {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.setup-validation-errors-kind {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #ef233c;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.setup-validation-errors-link {
+  background: none;
+  border: none;
+  color: #d90429;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.setup-validation-errors-link:hover {
+  color: #8b021e;
+}
+
+.setup-loading {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #edf2f4;
+  color: #2b2d42;
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+@media (max-width: 900px) {
+  .setup-review-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .setup-card {
+    padding: 28px 20px;
+  }
+
+  .setup-card h1 {
+    font-size: 1.7rem;
+  }
+}
+
+/* ===== LivePreview pane — contain the embedded FloorPlan component.
+   FloorPlan.css sets `.floor-plan-wrapper { min-width: 100vw; min-height: 100dvh }`
+   so it fills the viewport on the guest path. Inside the side-by-side review
+   grid we need the wrapper to size to its column (not the viewport) or it
+   blows the layout out horizontally. The overrides below scope only to the
+   preview container so the guest path is unaffected. ========================= */
+
+.live-preview-root {
+  width: 100%;
+  /* The source images are typically ~1.31:1. Give the pane a stable aspect
+     so the <picture>/<img> has something to size against before it loads. */
+  aspect-ratio: 2400 / 1831;
+  max-height: 60vh;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #edf2f4;
+}
+
+/* react-zoom-pan-pinch's generated wrapper div — fill the pane. */
+.live-preview-root .react-transform-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.live-preview-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.live-preview-root .react-transform-component {
+  width: 100%;
+  height: 100%;
+}
+
+/* Reset the guest-path viewport-anchored floor plan sizing so it fits the
+   pane's column instead of filling the window. */
+.live-preview-root .floor-plan-wrapper {
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: auto;
+}
+
+.live-preview-root .floor-plan-image {
+  width: 100%;
+  height: auto;
+}

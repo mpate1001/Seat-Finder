@@ -1,250 +1,159 @@
-.floor-plan-container {
-  width: 100%;
-}
+/* FloorPlan.css — presentational styles for the inner floor plan content:
+   the <picture> image and the 54 markers. The pan/zoom surface + overlay +
+   close button + animation keyframes live in MapView.css (plan 03).
+   Palette is locked to UI-SPEC: #d90429 (assigned only), #8d99ae, #2b2d42, #ffffff. */
 
-.floor-plan-header {
-  text-align: center;
-  margin-bottom: 20px;
-  padding: 15px;
-  background: linear-gradient(135deg, #2b2d42 0%, #8d99ae 100%);
-  border-radius: 10px;
-}
-
-.floor-plan-header h3 {
-  color: white;
-  font-size: 1.3rem;
-  margin: 0;
-  font-weight: 600;
-}
-
-.canvas-container {
+/* Wrapper — aspect-locked to the source floor plan (2400×1831 ≈ 1.31:1) so
+   pin percentage coords always align with image pixels. The min-width/
+   min-height pair guarantees the wrapper covers the viewport on both axes:
+   the aspect-ratio rule plus the two mins resolves to max(viewport.w,
+   viewport.h × aspect) × max(viewport.h, viewport.w / aspect). On a portrait
+   phone this yields a wrapper wider than the viewport — the user pans
+   horizontally to see edges — but no vertical black gap. */
+.floor-plan-wrapper {
   position: relative;
-  width: 100%;
-  max-width: 100%;
-  margin: 0 auto;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  background: white;
+  display: block;
+  line-height: 0; /* eliminate baseline gap below the img */
+  aspect-ratio: 2400 / 1831;
+  /* Viewport-anchored mins break the circular %-sizing cycle inside
+     react-zoom-pan-pinch's wrapper/content elements (which otherwise collapse
+     to the image's natural box). `100vw` + `100dvh` guarantee the wrapper
+     covers the viewport on both axes and the aspect-ratio resolves height. */
+  min-width: 100vw;
+  min-height: 100dvh;
+  width: auto;
+  height: auto;
 }
 
 .floor-plan-image {
+  display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* ====== Assigned-table pin — red teardrop with pulse ring (D-10) ====== */
+
+.pin-assigned {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  /* Shift the pin upward 16px so the tip sits on the TOP EDGE of the table
+     circle, pointing down — keeps the table number on the image fully
+     visible instead of being covered by the teardrop. */
+  transform: translate(-50%, calc(-100% - 16px));
+  pointer-events: none;              /* D-12 — visual only this phase */
+  z-index: 10;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+}
+
+.pin-assigned-svg {
+  width: 36px;
+  height: 44px;
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
   display: block;
 }
 
-.point-marker {
+.pin-assigned-number {
   position: absolute;
-  width: 40px;
-  height: 40px;
-  margin-left: -20px;
-  margin-top: -20px;
-  pointer-events: none;
-  z-index: 10;
-}
-
-.point-pulse {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(239, 35, 60, 0.6);
-  border: 3px solid #ef233c;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.point-pulse::after {
-  content: '';
-  position: absolute;
-  top: -3px;
-  left: -3px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 3px solid #ef233c;
-  animation: ripple 2s ease-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 0.8;
-  }
-}
-
-@keyframes ripple {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(2);
-    opacity: 0;
-  }
-}
-
-.floor-plan-legend {
-  text-align: center;
-  margin-top: 15px;
-  padding: 10px;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.floor-plan-legend p {
-  margin: 0;
-  color: #666;
-  font-size: 0.9rem;
-}
-
-.floor-plan-legend .floor-plan-warning {
-  color: #d90429;
-  font-weight: 500;
-}
-
-/* Enlarged floor plan modal */
-.floor-plan-enlarged-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  z-index: 2000;
-  animation: fadeIn 0.3s ease;
-}
-
-.floor-plan-enlarged-content {
-  background: white;
-  border-radius: 15px;
-  padding: 30px;
-  width: 98vw;
-  height: 98vh;
-  position: relative;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  animation: slideUp 0.3s ease;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.floor-plan-close-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: rgba(239, 35, 60, 0.9);
-  color: white;
-  border: none;
-  font-size: 2rem;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-  transition: all 0.2s ease;
+  left: 50%;
+  top: 14px; /* centered inside the teardrop's circular head, not the tip */
+  transform: translateX(-50%);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
   line-height: 1;
-  padding: 0;
+  letter-spacing: 0.02em;
+  pointer-events: none;
 }
 
-.floor-plan-close-button:hover {
+.pin-pulse-ring {
+  position: absolute;
+  /* Center the ring over the teardrop head using margin-negatives rather
+     than transform: translate. The pinPulse keyframe applies
+     transform: scale(...), which OVERRIDES any translate-based centering
+     and drifts the ring off-axis (the classic "offset ring" bug). Using
+     margin avoids the conflict. */
+  left: 50%;
+  top: 18px;           /* center of the teardrop head (viewBox y≈18) */
+  width: 44px;
+  height: 44px;
+  margin-left: -22px;  /* half width — hard centering immune to transform */
+  margin-top: -22px;   /* half height */
+  border-radius: 50%;
   background: #d90429;
-  transform: scale(1.1);
+  /* pinPulse keyframe is defined in MapView.css — overall animation orchestration
+     lives there. This rule consumes it. */
+  animation: pinPulse 1.2s ease-in-out infinite;
+  pointer-events: none;
 }
 
-.floor-plan-enlarged-header {
-  text-align: center;
-  margin-bottom: 20px;
-  flex-shrink: 0;
+/* ====== Non-assigned table dots — muted slate (D-11) ====== */
+
+.pin-dot {
+  position: absolute;
+  width: 44px;                       /* tap-target footprint */
+  height: 44px;
+  transform: translate(-50%, -50%);  /* center on coord */
+  pointer-events: none;              /* D-12 */
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.floor-plan-enlarged-header h3 {
+.pin-dot::before {
+  content: '';
+  width: 12px;                       /* visual dot size */
+  height: 12px;
+  border-radius: 50%;
+  background: #8d99ae;
+  border: 1px solid #ffffff;
+  box-sizing: border-box;
+}
+
+/* ====== Adaptive neighbor labels (D-09) ======
+   Hidden by default; faded in by the .labels-visible class on the wrapper,
+   which FloorPlan.tsx toggles based on useTransformComponent scale >= 1.8. */
+
+.pin-label {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 10px);  /* 10px below the dot's visual center */
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 700;
   color: #2b2d42;
-  font-size: 1.8rem;
-  margin: 0;
-  font-weight: 600;
+  text-shadow: 0 0 3px #ffffff, 0 0 3px #ffffff;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
 }
 
-.canvas-container-enlarged {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  flex: 1;
-  margin: 0 auto;
-  border-radius: 10px;
-  overflow: auto;
-  background: white;
+.floor-plan-wrapper.labels-visible .pin-dot .pin-label {
+  opacity: 1;
 }
 
-.floor-plan-image-enlarged {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: contain;
+/* ====== Reduced motion override (a11y) ====== */
+
+@media (prefers-reduced-motion: reduce) {
+  .pin-pulse-ring {
+    animation: none;
+  }
+  .pin-label {
+    transition: none;
+  }
 }
 
-/* Mobile optimizations */
+/* ====== Mobile breakpoint — keep 44px tap targets identical across sizes ====== */
+
 @media (max-width: 600px) {
-  .floor-plan-header h3 {
-    font-size: 1.1rem;
-  }
-
-  .point-marker {
-    width: 30px;
-    height: 30px;
-    margin-left: -15px;
-    margin-top: -15px;
-  }
-
-  .point-pulse {
-    width: 30px;
-    height: 30px;
-  }
-
-  .point-pulse::after {
-    width: 30px;
-    height: 30px;
-    top: -3px;
-    left: -3px;
-  }
-
-  .floor-plan-legend p {
-    font-size: 0.85rem;
-  }
-
-  .floor-plan-enlarged-content {
-    padding: 20px;
-    width: 100vw;
-    height: 100vh;
-    border-radius: 0;
-  }
-
-  .floor-plan-enlarged-header {
-    margin-bottom: 15px;
-  }
-
-  .floor-plan-enlarged-header h3 {
-    font-size: 1.3rem;
-  }
-
-  .floor-plan-close-button {
-    width: 45px;
-    height: 45px;
-    font-size: 1.8rem;
-    top: 15px;
-    right: 15px;
+  .pin-label {
+    font-size: 11px;
   }
 }

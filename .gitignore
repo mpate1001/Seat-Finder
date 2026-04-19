@@ -12,6 +12,22 @@ dist
 dist-ssr
 *.local
 
+# vite-plugin-pwa dev-mode service worker output (emitted whenever `npm run dev`
+# runs with devOptions.enabled). Regenerates on every start — never commit.
+dev-dist
+
+# Local agent / plugin session state (oh-my-claudecode, hookify, etc.). These
+# tools write per-session JSON into repo-rooted directories; none of it is
+# meaningful to other developers or CI.
+.omc
+.claude/state
+.claude/worktrees
+
+# Local environment (gitignored -- see .env.example for template)
+.env
+.env.local
+.env.*.local
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

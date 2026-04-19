@@ -1,0 +1,154 @@
+/*
+ * src/setup/ExportPanel.css — Download + Copy UI (D-17) + manual-select
+ * fallback textarea (Pitfall 5).
+ *
+ * Visual tone matches SetupApp.css — same radius, palette, and button
+ * weights. D-17 calls for the two action buttons side by side with no
+ * visual hierarchy between Download and Copy (no primary/secondary split).
+ */
+
+.export-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid rgba(141, 153, 174, 0.25);
+  border-radius: 16px;
+}
+
+.export-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.export-panel-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2b2d42;
+}
+
+.export-panel-back {
+  padding: 8px 14px;
+  background: #ffffff;
+  color: #2b2d42;
+  border: 1px solid #8d99ae;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.export-panel-back:hover {
+  background: #edf2f4;
+  border-color: #2b2d42;
+}
+
+.export-panel-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.export-panel-button {
+  padding: 12px 20px;
+  background: #ef233c;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.export-panel-button:hover {
+  background: #d90429;
+}
+
+.export-panel-button--primary {
+  /* Both action buttons share the primary style per D-17 — no visual
+     hierarchy between Download and Copy. */
+}
+
+.export-panel-toast {
+  display: inline-block;
+  padding: 6px 12px;
+  background: #d4edda;
+  color: #155724;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.export-panel-reminder {
+  margin: 0;
+  padding: 10px 14px;
+  background: #eef2ff;
+  border-radius: 8px;
+  color: #2b2d42;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.export-panel-reminder code {
+  background: rgba(43, 45, 66, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.export-panel-fallback {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.export-panel-fallback-hint {
+  margin: 0;
+  color: #5d4200;
+  background: #fff3cd;
+  border: 1px solid #f0c24b;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.export-panel-textarea {
+  width: 100%;
+  min-height: 200px;
+  padding: 10px 12px;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono',
+    monospace;
+  font-size: 0.85rem;
+  color: #2b2d42;
+  background: #f7f9fb;
+  border: 1px solid #8d99ae;
+  border-radius: 8px;
+  resize: vertical;
+}
+
+@media (max-width: 600px) {
+  .export-panel-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .export-panel-button {
+    width: 100%;
+  }
+
+  .export-panel-toast {
+    align-self: center;
+  }
+}
