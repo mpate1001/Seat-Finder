@@ -124,20 +124,6 @@ export default function MapView({ guest, onClose }: MapViewProps) {
   // box, not the viewport.
   return createPortal(
     <div className="map-overlay" role="dialog" aria-modal="true" aria-label="Floor plan map">
-      <div className="map-overlay-card" aria-live="polite">
-        <h2 className="map-overlay-card-greeting">
-          Welcome, {guest.firstName}! — Table {guest.tableNumber}
-        </h2>
-        {guest.description && (
-          <p className="map-overlay-card-description">{guest.description}</p>
-        )}
-        {!hasValidPosition && (
-          <p className="map-overlay-card-fallback">
-            Table {guest.tableNumber} — please ask staff for directions
-          </p>
-        )}
-      </div>
-
       <button
         type="button"
         className="map-close-button"
@@ -148,33 +134,69 @@ export default function MapView({ guest, onClose }: MapViewProps) {
         &times;
       </button>
 
-      <div className="map-surface">
-        <TransformWrapper
-          ref={transformRef}
-          initialScale={1}
-          minScale={1.0}
-          maxScale={6}
-          centerOnInit={true}
-          limitToBounds={true}
-          centerZoomedOut={true}
-          smooth={true}
-          wheel={{ step: 0.2 }}
-          doubleClick={{ mode: 'toggle', step: 2.75 }}
-          pinch={{ disabled: false }}
-          panning={{ velocityDisabled: false }}
-        >
-          <TransformComponent
-            wrapperClass="map-transform-wrapper"
-            contentClass="map-transform-content"
+      {hasValidPosition ? (
+        <>
+          <div className="map-overlay-card" aria-live="polite">
+            <h2 className="map-overlay-card-greeting">
+              Welcome, {guest.firstName}! — Table {guest.tableNumber}
+            </h2>
+            {guest.description && (
+              <p className="map-overlay-card-description">{guest.description}</p>
+            )}
+          </div>
+
+          <div className="map-surface">
+            <TransformWrapper
+              ref={transformRef}
+              initialScale={1}
+              minScale={1.0}
+              maxScale={6}
+              centerOnInit={true}
+              limitToBounds={true}
+              centerZoomedOut={true}
+              smooth={true}
+              wheel={{ step: 0.2 }}
+              doubleClick={{ mode: 'toggle', step: 2.75 }}
+              pinch={{ disabled: false }}
+              panning={{ velocityDisabled: false }}
+            >
+              <TransformComponent
+                wrapperClass="map-transform-wrapper"
+                contentClass="map-transform-content"
+              >
+                <FloorPlan
+                  tableNumber={guest.tableNumber}
+                  assignedPinRef={assignedPinRef}
+                  onImageLoad={handleImageLoad}
+                />
+              </TransformComponent>
+            </TransformWrapper>
+          </div>
+        </>
+      ) : (
+        // Missing-table fallback: render a centered error card INSTEAD of the
+        // floor plan UI. The previous one-liner was buried inside the greeting
+        // card, easy to miss on mobile. role="alert" announces it to screen
+        // readers; the floor plan + greeting are both suppressed so there's no
+        // half-broken zoom UI to confuse the guest.
+        <div className="map-overlay-error-card" role="alert">
+          <h2 className="map-overlay-error-headline">
+            Table {guest.tableNumber} not found on the floor plan
+          </h2>
+          <p className="map-overlay-error-body">
+            We couldn&apos;t locate Table {guest.tableNumber} on the venue
+            diagram, {guest.firstName}. Please ask staff for directions —
+            they can point you to the right area.
+          </p>
+          <button
+            type="button"
+            className="map-overlay-error-button"
+            onClick={onClose}
           >
-            <FloorPlan
-              tableNumber={guest.tableNumber}
-              assignedPinRef={assignedPinRef}
-              onImageLoad={handleImageLoad}
-            />
-          </TransformComponent>
-        </TransformWrapper>
-      </div>
+            Got it
+          </button>
+        </div>
+      )}
     </div>,
     document.body,
   );

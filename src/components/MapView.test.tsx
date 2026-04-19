@@ -116,21 +116,32 @@ describe('MapView', () => {
     expect(zoomToElement).toHaveBeenCalledTimes(1);
   });
 
-  it('missing tableNumber shows fallback', () => {
+  it('missing tableNumber shows fallback error card instead of the floor plan', () => {
     render(
       <MapView
         guest={guestFixture({ tableNumber: '9999' })}
         onClose={vi.fn()}
       />,
     );
-    fireImageLoad();
-    advanceTimers(500);
 
-    // Fallback text is visible
+    // The floor plan <img> must NOT render at all in the error path — we
+    // suppress the broken zoom UI to avoid a half-loaded surface.
+    expect(
+      document.body.querySelector('img[alt="Reception floor plan"]'),
+    ).toBeNull();
+
+    // Error card replaces the floor plan, with a clear next-action message
+    // for the guest. role="alert" announces it to assistive tech.
     expect(
       screen.getByText(/please ask staff for directions/i),
     ).toBeInTheDocument();
-    // Zoom must NOT fire when the table is not in floorPlan.json
+    const errorCard = document.body.querySelector('.map-overlay-error-card');
+    expect(errorCard).not.toBeNull();
+    expect(errorCard!.getAttribute('role')).toBe('alert');
+
+    // Even after any pending timers fire, zoom must not be invoked — there
+    // is no assignedPinRef target when the table isn't on the plan.
+    advanceTimers(500);
     expect(zoomToElement).not.toHaveBeenCalled();
   });
 

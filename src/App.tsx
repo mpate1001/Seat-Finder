@@ -67,7 +67,7 @@ function App() {
 
   function handleSearch(searchTerm: string) {
     setQuery(searchTerm);
-    setSearchResults(searchGuests(searchTerm, guests, fuse));
+    setSearchResults(searchGuests(searchTerm, fuse));
   }
 
   function handleGuestSelect(guest: Guest) {
