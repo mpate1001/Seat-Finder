@@ -74,27 +74,41 @@ describe('<FloorPlan /> — guest path (default config, <picture> preserved)', (
     expect(sources[0].getAttribute('srcset')).toContain('2400w');
   });
 
-  it('assigned-pin style matches floorPlan.json:7 coordinates exactly (23.09% / 57.97%) — byte-identical regression guard', () => {
+  it('assigned-pin style matches the first floorPlan.json entry coordinates — byte-identical regression guard', async () => {
+    // Drive the assertion from whatever the current floorPlan.json contains
+    // rather than pinning to a specific table number. The original test
+    // hardcoded table 7 at (0.2309, 0.5797), which broke when the floor plan
+    // was swapped to a new venue layout that didn't include table 7.
+    // Reading the config keeps the regression guard valid (still asserts
+    // pin coords come from the JSON to full precision) without making the
+    // test fragile to legitimate floor-plan changes.
+    const floorPlanConfig = (await import('../config/floorPlan.json'))
+      .default as {
+      tablePositions: Record<string, { x: number; y: number }>;
+    };
+    const tableNumbers = Object.keys(floorPlanConfig.tablePositions);
+    expect(tableNumbers.length).toBeGreaterThan(0);
+    const tableNumber = tableNumbers[0];
+    const pos = floorPlanConfig.tablePositions[tableNumber];
+    const expectedLeft = `${pos.x * 100}%`;
+    const expectedTop = `${pos.y * 100}%`;
+
     const { container } = render(
       <FloorPlan
-        tableNumber="7"
+        tableNumber={tableNumber}
         assignedPinRef={noopRef}
         onImageLoad={() => {}}
       />,
     );
 
     const pin = container.querySelector<HTMLDivElement>(
-      '.pin-assigned[data-table-id="7"]',
+      `.pin-assigned[data-table-id="${tableNumber}"]`,
     );
     expect(pin).not.toBeNull();
+    expect(pin!.style.left).toBe(expectedLeft);
+    expect(pin!.style.top).toBe(expectedTop);
 
-    // floorPlan.json table 7: { x: 0.2309, y: 0.5797 } → 23.09% / 57.97%.
-    // The component computes `${pos.x * 100}%` so the literal string must
-    // agree with the JSON to full precision.
-    expect(pin!.style.left).toBe('23.09%');
-    expect(pin!.style.top).toBe('57.97%');
-
-    // Only ONE pin renders (the assigned one) — all other 53 tables are
+    // Only ONE pin renders (the assigned one) — all other tables are
     // suppressed per Phase 3 decision.
     const allPins = container.querySelectorAll('.pin-assigned');
     expect(allPins.length).toBe(1);
