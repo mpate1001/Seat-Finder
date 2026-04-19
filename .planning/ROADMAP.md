@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Fuzzy Search** - Replace `.includes()` with fuzzy matching so guests find their name despite typos and mobile keyboard errors
 - [x] **Phase 3: Map Experience** - Add animated pan+zoom, pinch-to-zoom, and improved markers so guests can visually navigate to their table
 - [x] **Phase 4: Performance & Offline** - Cache the guest list and install a PWA service worker so the app works reliably on venue WiFi and poor cellular
-- [x] **Phase 5: Setup Tooling** - Build a click-to-place floor plan editor so future table coordinate mapping requires no manual pixel work (code complete 2026-04-18 — hotfix 7dcc253..824af4d cleared detection-hang UAT blocker; admin UAT checklist in 05-UAT.md still pending)
+- [x] **Phase 5: Setup Tooling** - Build a click-to-place floor plan editor so future table coordinate mapping requires no manual pixel work (admin UAT signed off 2026-04-19; hotfix trail 7dcc253..6c09f26 cleared the detection-hang blocker)
 
 ## Phase Details
 
@@ -103,4 +103,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Fuzzy Search | 2/2 | Complete | 2026-04-16 |
 | 3. Map Experience | 5/5 | Complete | 2026-04-17 |
 | 4. Performance & Offline | 6/6 | Complete | 2026-04-17 |
-| 5. Setup Tooling | 7/7 | Code complete, admin UAT pending | 2026-04-18 |
+| 5. Setup Tooling | 7/7 | Complete (UAT 2026-04-19) | 2026-04-19 |

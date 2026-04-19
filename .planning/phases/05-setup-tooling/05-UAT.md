@@ -1,6 +1,14 @@
 # Phase 5: Setup Tooling — User Acceptance Test (UAT)
 
-**Gate:** Every PASS/FAIL check in this document must be confirmed before Phase 5 is marked complete. Any FAIL → file as a gap for `/gsd-plan-phase 05 --gaps` in a follow-up plan.
+> ✅ **UAT PASSED — 2026-04-19.** Admin signed off after the hotfix trail
+> `7dcc253..6c09f26` cleared the detection-hang blocker, the FINAL floor
+> plan was swapped in (`fe2a08f`), and the Vercel preview deploy verified
+> end-to-end against a real upload. Section 1a was ticked manually during
+> the build verification; sections 1b–8 were validated against the
+> deployed Preview URL on the admin's device. **Phase 5 is closed and
+> v1.0 is ready for live event.**
+
+**Gate (historical):** Every PASS/FAIL check in this document was confirmed before Phase 5 was marked complete. Any FAIL → filed as a gap for `/gsd-plan-phase 05 --gaps` in a follow-up plan.
 
 **Automated coverage already verifying:**
 
