@@ -9,10 +9,10 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Search
 
-- [ ] **SRCH-01**: Guest can search by name with fuzzy matching that handles typos and character-distance errors on mobile keyboards
-- [ ] **SRCH-02**: Search results update as the guest types each character (search-as-you-type)
-- [ ] **SRCH-03**: Fuzzy search returns relevant results with sensible ranking (best match first, threshold tuned to avoid false positives)
-- [ ] **SRCH-04**: Search shows a clear "no results found" message when no guests match
+- [x] **SRCH-01**: Guest can search by name with fuzzy matching that handles typos and character-distance errors on mobile keyboards
+- [x] **SRCH-02**: Search results update as the guest types each character (search-as-you-type)
+- [x] **SRCH-03**: Fuzzy search returns relevant results with sensible ranking (best match first, threshold tuned to avoid false positives)
+- [x] **SRCH-04**: Search shows a clear "no results found" message when no guests match
 
 ### Map Experience
 
@@ -24,9 +24,9 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Data Integrity
 
-- [ ] **DATA-01**: Table 46 and 47 have correct, distinct coordinates in floorPlan.json
-- [ ] **DATA-02**: Floor plan positions use percentage-based coordinates (0-1) instead of absolute pixels, surviving image resizes
-- [ ] **DATA-03**: CSV parsing uses column headers instead of positional indexes for resilience
+- [x] **DATA-01**: Table 46 and 47 have correct, distinct coordinates in floorPlan.json
+- [x] **DATA-02**: Floor plan positions use percentage-based coordinates (0-1) instead of absolute pixels, surviving image resizes
+- [x] **DATA-03**: CSV parsing uses column headers instead of positional indexes for resilience
 
 ### Performance & Offline
 
@@ -78,13 +78,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 1 | Pending |
-| DATA-02 | Phase 1 | Pending |
-| DATA-03 | Phase 1 | Pending |
-| SRCH-01 | Phase 2 | Pending |
-| SRCH-02 | Phase 2 | Pending |
-| SRCH-03 | Phase 2 | Pending |
-| SRCH-04 | Phase 2 | Pending |
+| DATA-01 | Phase 1 | Complete |
+| DATA-02 | Phase 1 | Complete |
+| DATA-03 | Phase 1 | Complete |
+| SRCH-01 | Phase 2 | Complete |
+| SRCH-02 | Phase 2 | Complete |
+| SRCH-03 | Phase 2 | Complete |
+| SRCH-04 | Phase 2 | Complete |
 | MAP-01 | Phase 3 | Complete |
 | MAP-02 | Phase 3 | Complete |
 | MAP-03 | Phase 3 | Complete |

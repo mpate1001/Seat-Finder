@@ -14,9 +14,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Data Integrity** - Fix the table coordinate bug and harden data parsing so all downstream features build on a correct foundation
 - [x] **Phase 2: Fuzzy Search** - Replace `.includes()` with fuzzy matching so guests find their name despite typos and mobile keyboard errors
-- [ ] **Phase 3: Map Experience** - Add animated pan+zoom, pinch-to-zoom, and improved markers so guests can visually navigate to their table
-- [ ] **Phase 4: Performance & Offline** - Cache the guest list and install a PWA service worker so the app works reliably on venue WiFi and poor cellular
-- [ ] **Phase 5: Setup Tooling** - Build a click-to-place floor plan editor so future table coordinate mapping requires no manual pixel work
+- [x] **Phase 3: Map Experience** - Add animated pan+zoom, pinch-to-zoom, and improved markers so guests can visually navigate to their table
+- [x] **Phase 4: Performance & Offline** - Cache the guest list and install a PWA service worker so the app works reliably on venue WiFi and poor cellular
+- [x] **Phase 5: Setup Tooling** - Build a click-to-place floor plan editor so future table coordinate mapping requires no manual pixel work (code complete 2026-04-18 — hotfix 7dcc253..824af4d cleared detection-hang UAT blocker; admin UAT checklist in 05-UAT.md still pending)
 
 ## Phase Details
 
@@ -101,6 +101,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Data Integrity | 3/3 | Complete | 2026-04-12 |
 | 2. Fuzzy Search | 2/2 | Complete | 2026-04-16 |
-| 3. Map Experience | 0/5 | Planning complete | - |
-| 4. Performance & Offline | 0/6 | Planning complete | - |
-| 5. Setup Tooling | 6/7 | In Progress|  |
+| 3. Map Experience | 5/5 | Complete | 2026-04-17 |
+| 4. Performance & Offline | 6/6 | Complete | 2026-04-17 |
+| 5. Setup Tooling | 7/7 | Code complete, admin UAT pending | 2026-04-18 |

@@ -27,13 +27,13 @@ This UAT covers the BROWSER behaviors and the real-image detection-accuracy chec
 ## Build gate — TOOL-03
 
 ### 1a. Full build chain passes
-- [ ] Run `npm run build`
-- [ ] Final output includes all four steps in order:
+- [X] Run `npm run build`
+- [x] Final output includes all four steps in order:
   - `tsc` exits clean
   - `vite build` emits `dist/` with `dist/assets/SetupApp-*.js` and `dist/assets/index-*.js`
   - `PWA build verification passed.`
   - `verify-setup-split passed.` followed by clean guest entry + setup chunk + CV chunk verified
-- [ ] If any step fails → STOP the UAT, open the error, fix, rerun
+- [x] If any step fails → STOP the UAT, open the error, fix, rerun
 
 ### 1b. Grep-level confirmation (manual double-check)
 - [ ] `grep -l 'opencv\|tesseract' dist/assets/index-*.js` prints NOTHING
