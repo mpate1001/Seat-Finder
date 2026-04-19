@@ -316,8 +316,18 @@ export default function ReviewCanvas({
         // 85vh in the stylesheet, the container shrinks on the constrained
         // axis and the other axis resolves via the aspect ratio — so the
         // full image is always visible and % pin coords stay aligned.
+        //
+        // Guard against `0 / 0` (invalid CSS) when either dimension is
+        // missing — a real upload always has positive dimensions, but the
+        // fallback keeps the container from collapsing if a caller forgets
+        // to plumb imageNaturalWidth/Height or passes 0 during an initial
+        // render. 4:3 matches the typical floor-plan aspect well enough
+        // that the placeholder state doesn't shift layout on first paint.
         style={{
-          aspectRatio: `${imageNaturalWidth} / ${imageNaturalHeight}`,
+          aspectRatio:
+            imageNaturalWidth > 0 && imageNaturalHeight > 0
+              ? `${imageNaturalWidth} / ${imageNaturalHeight}`
+              : '4 / 3',
         }}
       >
         <img

@@ -125,6 +125,15 @@ vi.mock('@techstark/opencv-js', () => {
   // just present as an Emscripten cwrap stub.
   cv.getBuildInformation = () => 'fake cv build info';
 
+  // Simulate Emscripten's MODULARIZE `.then` method on the Module export.
+  // The real @techstark/opencv-js exposes this; it is the thenable that
+  // triggers Promise-resolution absorption and hung detection until
+  // commit 7dcc253. getCv must strip it before resolving so the outer
+  // `await` returns cleanly — the spec below asserts that it does.
+  cv.then = () => {
+    /* Emscripten-style thenable — never actually called in this mock. */
+  };
+
   return { default: cv };
 });
 
@@ -160,6 +169,39 @@ describe('getCv', () => {
     const cv1 = await p1;
     const cv2 = await p2;
     expect(cv1).toBe(cv2);
+  });
+
+  it('strips the Emscripten thenable `.then` from the resolved cv namespace', async () => {
+    // REGRESSION GUARD: @techstark/opencv-js ships its Module object as the
+    // default export with a MODULARIZE `.then` method. When returned from an
+    // async function, Promise resolution treats it as a thenable and re-awaits
+    // `mod.then` — but Module.then never calls its callback after
+    // onRuntimeInitialized has already fired, so the caller's `await getCv()`
+    // hangs forever. Fixed in commit 7dcc253 by stripping `.then` before
+    // returning. This spec pins that contract: if a future upgrade of the
+    // opencv package moves or renames the thenable, we want the test suite
+    // to surface the drift before it re-enters UAT.
+    //
+    // Install `.then` explicitly here — `vi.mock` factories cache their
+    // returned object across `vi.resetModules()`, so a prior test that
+    // exercised getCv has already stripped the mock's `.then`. Re-installing
+    // via defineProperty keeps the test order-independent.
+    const cvModuleImport = await import('@techstark/opencv-js');
+    const mod = cvModuleImport.default as unknown as { then?: unknown };
+    Object.defineProperty(mod, 'then', {
+      value: () => {
+        /* Emscripten-style thenable — never invoked; existence alone triggers
+           Promise-resolution absorption if not stripped. */
+      },
+      configurable: true,
+    });
+    expect(typeof mod.then).toBe('function');
+
+    const { getCv } = await loadDetectCore();
+    const cv = await getCv();
+
+    const cvAsThenable = cv as unknown as { then?: unknown };
+    expect(cvAsThenable.then).toBeUndefined();
   });
 });
 
