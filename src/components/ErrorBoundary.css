@@ -1,0 +1,68 @@
+/* ErrorBoundary.css — full-viewport fallback shown when an uncaught render
+   error escapes the React tree. Matches the existing app palette
+   (#2b2d42 navy, #edf2f4 light, #ffffff card) and the centered-card layout
+   used by MapView's missing-table error card. */
+
+.error-boundary-container {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #edf2f4;
+  box-sizing: border-box;
+}
+
+.error-boundary-card {
+  width: min(90vw, 460px);
+  padding: 32px 28px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.18);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.error-boundary-headline {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #2b2d42;
+}
+
+.error-boundary-body {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #2b2d42;
+}
+
+.error-boundary-button {
+  align-self: center;
+  margin-top: 4px;
+  padding: 12px 28px;
+  min-width: 140px;
+  background: #2b2d42;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.error-boundary-button:hover,
+.error-boundary-button:focus {
+  background: #1f2132;
+  outline: none;
+}
+
+.error-boundary-button:focus-visible {
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #2b2d42;
+}

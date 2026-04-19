@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: "Phase 5 hotfix landed (5 commits: 7dcc253..6c09f26 on dev) — worker offload + thenable strip + OCR preprocessing + layout fits + confidence tune. 135/135 specs green. See .planning/phases/05-setup-tooling/05-HOTFIX-SUMMARY.md. Pending admin UAT on 05-UAT.md."
-last_updated: "2026-04-18T23:40:00.000Z"
-last_activity: 2026-04-18
+status: complete
+stopped_at: "v1.0 milestone complete — Phase 5 admin UAT signed off 2026-04-19. All 5 phases shipped, 136/136 vitest green, deployed via Vercel preview from dev."
+last_updated: "2026-04-19T15:50:00.000Z"
+last_activity: 2026-04-19
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 24
-  completed_plans: 23
-  percent: 96
+  completed_plans: 24
+  percent: 100
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-12)
 
 ## Current Position
 
-Phase: 05 (setup-tooling) — EXECUTING
+Phase: 05 (setup-tooling) — COMPLETE
 Plan: 7 of 7
-Status: Phase complete — ready for verification
-Last activity: 2026-04-18
+Status: All phases shipped, admin UAT passed 2026-04-19
+Last activity: 2026-04-19
 
-Progress: [████████░░] 83%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
