@@ -26,6 +26,11 @@ export interface RankedGuest {
  * list:
  *   - threshold 0.3: tight enough to keep typo-only matches relevant, loose
  *     enough to catch one or two character errors per word (mobile keyboards).
+ *     This value was calibrated in Phase 2 against the real guest list — see
+ *     `.planning/phases/02-fuzzy-search/02-01-PLAN.md` and the SRCH-03
+ *     ranking decision in REQUIREMENTS.md. Do not bump without re-running
+ *     the wedding-name test set; raising it admits gibberish matches, lowering
+ *     it loses real typo recovery.
  *   - ignoreLocation: a substring buried mid-name should match as well as one
  *     at the start; tier classification below restores the prefix-first bias.
  *   - minMatchCharLength: 1 lets a single-character query return prefix-style

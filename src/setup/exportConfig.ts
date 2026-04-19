@@ -83,6 +83,21 @@ export function buildFloorPlanConfig(
  *
  * Insertion order of tablePositions is preserved — callers should pass
  * configs already sorted (e.g. via buildFloorPlanConfig).
+ *
+ * ⚠️  THE OUTPUT FORMAT IS INTENTIONALLY BYTE-STRICT.  ⚠️
+ *
+ * The setup tool's contract (D-16, TOOL-02) is that an admin who exports
+ * a layout, hand-edits one entry, and pastes it back into
+ * `src/config/floorPlan.json` produces a file that diff-clean against what
+ * this serializer would re-emit. That diff-cleanliness is what
+ * `exportConfig.test.ts > byte-equivalence with src/config/floorPlan.json`
+ * pins down. Switching to `JSON.stringify(cfg, null, 2)` "for cleanliness"
+ * would silently break that contract — every coordinate would land on its
+ * own line and every existing diff/PR review against the file would be
+ * unreadable. If you genuinely need to change the on-disk format, you must
+ * also (a) re-export and recommit `src/config/floorPlan.json`, (b) update
+ * the byte-equivalence test fixture, and (c) flag the change in the next
+ * release notes so consumers re-running the setup tool aren't surprised.
  */
 export function serializeFloorPlanConfig(cfg: FloorPlanConfig): string {
   // The committed floorPlan.json stores every coordinate at EXACTLY 4 decimal

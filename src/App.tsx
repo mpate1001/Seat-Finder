@@ -109,10 +109,9 @@ function App() {
     <div className="app-container" style={{ backgroundImage: `url(${backgroundImage})` }}>
       <div className="card">
         <h1 className="title">Seat Finder</h1>
-        <p className="subtitle">Mahek & Saumya's Wedding</p>
-        <p className="subtitle">May 24th 2026</p>
-        <p className="subtitle">#MikeMetSaumOne</p>
-        <p className="welcome-text">Welcome! Please enter your name to find your table.</p>
+        <p className="subtitle">Mahek & Saumya's Reception</p>
+        <p className="welcome-text">Welcome!</p>
+        <p className="welcome-text">Please enter your name to find your table.</p>
         <StalenessBadge fetchedAt={fetchedAt} onRefresh={loadGuests} />
 
         <SearchForm onSearch={handleSearch} />
@@ -126,6 +125,11 @@ function App() {
         )}
 
         {selectedGuest && (
+          // key={tableNumber} forces a clean React remount when the admin
+          // selects a different guest while the map is already open. Without
+          // it, MapView keeps the prior `imageLoaded` state, the zoom-to-pin
+          // effect doesn't refire, and the new guest's pin never gets
+          // centered. Phase 3 RESEARCH.md Pitfall 5 has the long version.
           <MapView
             key={selectedGuest.tableNumber}
             guest={selectedGuest}

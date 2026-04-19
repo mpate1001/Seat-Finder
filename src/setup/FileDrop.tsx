@@ -51,6 +51,18 @@ const DECODE_ERROR_MESSAGE =
  *  re-examines sizes (Pitfall 4). */
 const MAX_DIMENSION = 3000;
 
+/** Hard cap on the source file size before we even hand it to
+ *  `createImageBitmap`. A typical exported floor-plan PNG from Canva/Figma is
+ *  2-6 MB at full venue scale; 10 MB is generous headroom that still rejects
+ *  pathological uploads (raw 4K screenshot dumps, accidentally-attached video
+ *  files, scanner outputs at 600 DPI) before they OOM the browser tab during
+ *  decode. The MIME whitelist above doesn't catch this — a valid PNG at
+ *  100 MB is still a valid PNG, just one we shouldn't try to load. */
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+
+const SIZE_REJECT_MESSAGE =
+  'That image is too large (max 10 MB). Please re-export at a smaller size — 2400px on the long edge is plenty.';
+
 export interface FileDropProps {
   /**
    * Called when a file has been accepted + decoded. `objectUrl` is produced
@@ -73,6 +85,14 @@ export default function FileDrop({ onImageReady, onError }: FileDropProps): JSX.
   async function handleFile(file: File): Promise<void> {
     if (!ACCEPTED_MIME_TYPES.has(file.type)) {
       onError(REJECT_MESSAGE);
+      return;
+    }
+    // Size check happens BEFORE createObjectURL so we never allocate a blob
+    // handle for a file we're about to reject. Without this, a multi-hundred-
+    // megabyte upload would still spin up the URL + decode pipeline before the
+    // OOM kicks in (Safari/iOS hits the wall at ~2 GB heap).
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      onError(SIZE_REJECT_MESSAGE);
       return;
     }
 

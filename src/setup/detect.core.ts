@@ -144,6 +144,27 @@ function stripThenable(mod: unknown): void {
   }
 }
 
+/**
+ * Delete every supplied OpenCV Mat, swallowing any per-Mat throw so a
+ * corrupted handle on one Mat doesn't prevent the rest from being released.
+ *
+ * Centralising the cleanup loop here means we can't accidentally forget a
+ * `.delete()` call when adding a new intermediate Mat to the Hough pipeline —
+ * just include the new Mat in the `releaseMats(...)` call and the finally
+ * block stays a single line. The previous implementation listed each
+ * `.delete()` separately and a missed entry would silently leak ~MB of
+ * WASM heap per detection (§Pitfall 1).
+ */
+function releaseMats(...mats: Array<{ delete: () => void }>): void {
+  for (const mat of mats) {
+    try {
+      mat.delete();
+    } catch {
+      /* one bad Mat must not block the rest of the cleanup */
+    }
+  }
+}
+
 /* ------------------------------------------------------------------------- */
 /* detectCirclesFromImageData — Hough with Mat lifecycle discipline          */
 /* ------------------------------------------------------------------------- */
@@ -208,9 +229,6 @@ export async function detectCirclesFromImageData(
     }
     return out;
   } finally {
-    src.delete();
-    gray.delete();
-    blurred.delete();
-    circles.delete();
+    releaseMats(src, gray, blurred, circles);
   }
 }
