@@ -4,12 +4,12 @@ import { fileURLToPath } from 'url';
 import { mkdirSync, statSync, existsSync } from 'fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const src = resolve(__dirname, '../src/assets/Reception Seat Diagram.png');
+const src = resolve(__dirname, '../public/floor-plan/floor-plan-final.png');
 const out = resolve(__dirname, '../public/floor-plan');
 
 if (!existsSync(src)) {
   console.error(`Source image not found: ${src}`);
-  console.error('Expected the floor plan PNG at src/assets/Reception Seat Diagram.png');
+  console.error('Expected the floor plan PNG at public/floor-plan/floor-plan-final.png');
   process.exit(1);
 }
 
