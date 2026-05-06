@@ -125,11 +125,9 @@ function App() {
         )}
 
         {selectedGuest && (
-          // key={tableNumber} forces a clean React remount when the admin
-          // selects a different guest while the map is already open. Without
-          // it, MapView keeps the prior `imageLoaded` state, the zoom-to-pin
-          // effect doesn't refire, and the new guest's pin never gets
-          // centered. Phase 3 RESEARCH.md Pitfall 5 has the long version.
+          // key={tableNumber} forces a clean React remount per selection so
+          // history-state and refs don't carry across guests if the map is
+          // ever switched without first being closed.
           <MapView
             key={selectedGuest.tableNumber}
             guest={selectedGuest}

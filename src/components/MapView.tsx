@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
   TransformWrapper,
   TransformComponent,
-  type ReactZoomPanPinchRef,
 } from 'react-zoom-pan-pinch';
 import { Guest } from '../types';
 import floorPlanConfig from '../config/floorPlan.json';
@@ -18,9 +17,7 @@ interface MapViewProps {
 const tablePositions = floorPlanConfig.tablePositions as Record<string, { x: number; y: number }>;
 
 export default function MapView({ guest, onClose }: MapViewProps) {
-  const transformRef = useRef<ReactZoomPanPinchRef | null>(null);
   const assignedPinRef = useRef<HTMLDivElement | null>(null);
-  const [imageLoaded, setImageLoaded] = useState(false);
 
   const hasValidPosition = Boolean(tablePositions[guest.tableNumber]);
 
@@ -86,37 +83,6 @@ export default function MapView({ guest, onClose }: MapViewProps) {
     realUnmountRef.current = false;
   });
 
-  // Animation orchestration: 250ms hold → 700ms zoom to 2.75× on assigned pin
-  // Only runs when image is loaded AND the guest has a valid position
-  useEffect(() => {
-    if (!imageLoaded || !hasValidPosition) return;
-
-    const prefersReducedMotion =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    const holdMs = prefersReducedMotion ? 0 : 250;
-    const zoomMs = prefersReducedMotion ? 0 : 700;
-
-    const timer = window.setTimeout(() => {
-      if (!transformRef.current || !assignedPinRef.current) return;
-      transformRef.current.zoomToElement(
-        assignedPinRef.current,
-        2.75,
-        zoomMs,
-        'easeOutQuart',
-        0,
-        64,
-      );
-    }, holdMs);
-
-    return () => window.clearTimeout(timer);
-  }, [imageLoaded, hasValidPosition, guest.tableNumber]);
-
-  function handleImageLoad() {
-    setImageLoaded(true);
-  }
-
   // Portal to document.body so `.map-overlay { position: fixed }` is rooted at the
   // viewport. Without the portal, MapView renders inside App.tsx's `.card` div,
   // whose `backdrop-filter: blur(10px)` promotes `.card` to the containing block
@@ -147,7 +113,6 @@ export default function MapView({ guest, onClose }: MapViewProps) {
 
           <div className="map-surface">
             <TransformWrapper
-              ref={transformRef}
               initialScale={1}
               minScale={1.0}
               maxScale={6}
@@ -167,7 +132,6 @@ export default function MapView({ guest, onClose }: MapViewProps) {
                 <FloorPlan
                   tableNumber={guest.tableNumber}
                   assignedPinRef={assignedPinRef}
-                  onImageLoad={handleImageLoad}
                 />
               </TransformComponent>
             </TransformWrapper>
