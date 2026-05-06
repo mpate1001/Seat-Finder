@@ -1,26 +1,20 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup, act } from '@testing-library/react';
+import { render, screen, cleanup } from '@testing-library/react';
 import React, { StrictMode } from 'react';
 import type { Guest } from '../types';
 
-// Mock react-zoom-pan-pinch — we only care about the interface MapView calls.
-// The spy is module-scoped so tests can assert the exact argument tuple that
-// MapView forwards from `zoomToElement(assignedPinRef.current, scale, ms, ...)`.
-const zoomToElement = vi.fn();
-
+// Mock react-zoom-pan-pinch — MapView no longer drives the wrapper imperatively
+// (the auto-zoom-on-select effect was removed; guests now see the full layout
+// with their pin pulsing). Stub the wrapper as a passthrough.
 vi.mock('react-zoom-pan-pinch', async () => {
   const ReactActual = await vi.importActual<typeof import('react')>('react');
   return {
-    TransformWrapper: ReactActual.forwardRef<unknown, { children: React.ReactNode }>(
-      function TransformWrapperMock({ children }, ref) {
-        ReactActual.useImperativeHandle(ref, () => ({ zoomToElement }));
-        return ReactActual.createElement(
-          'div',
-          { 'data-testid': 'transform-wrapper' },
-          children,
-        );
-      },
-    ),
+    TransformWrapper: ({ children }: { children: React.ReactNode }) =>
+      ReactActual.createElement(
+        'div',
+        { 'data-testid': 'transform-wrapper' },
+        children,
+      ),
     TransformComponent: ({ children }: { children: React.ReactNode }) =>
       ReactActual.createElement(
         'div',
@@ -46,74 +40,15 @@ function guestFixture(overrides: Partial<Guest> = {}): Guest {
   };
 }
 
-// MapView renders via createPortal(..., document.body), so DOM queries must
-// target document.body rather than the render container.
-function fireImageLoad() {
-  const img = document.body.querySelector('img[alt="Reception floor plan"]');
-  if (!img) throw new Error('floor plan img not found');
-  // jsdom does not decode images; manually dispatch the load event so the
-  // onLoad handler in FloorPlan fires and flips MapView's imageLoaded state.
-  // Wrap in act() so React commits the state update and the effect subscribes
-  // to the setTimeout before we advance fake timers.
-  act(() => {
-    img.dispatchEvent(new Event('load'));
-  });
-}
-
-function advanceTimers(ms: number) {
-  // Wrap timer advance in act() so any state updates inside the fired effect
-  // (e.g. library internal cleanup) flush cleanly before the next assertion.
-  act(() => {
-    vi.advanceTimersByTime(ms);
-  });
-}
-
 describe('MapView', () => {
   beforeEach(() => {
-    vi.useFakeTimers();
-    zoomToElement.mockClear();
     // Reset history state between tests — MapView's popstate cleanup calls
     // history.back() which leaves stale entries otherwise.
     history.replaceState(null, '');
   });
 
   afterEach(() => {
-    vi.useRealTimers();
     cleanup();
-  });
-
-  it('zooms to assigned table', () => {
-    render(
-      <MapView guest={guestFixture({ tableNumber: '12' })} onClose={vi.fn()} />,
-    );
-    fireImageLoad();
-    advanceTimers(260);
-
-    expect(zoomToElement).toHaveBeenCalledTimes(1);
-    const call = zoomToElement.mock.calls[0];
-    // Signature: (node, scale, animationTime, animationType, offsetX, offsetY)
-    expect(call[0]).toBeInstanceOf(HTMLElement); // assignedPinRef.current
-    expect(call[1]).toBe(2.75);
-    expect(call[2]).toBe(700);
-    expect(call[3]).toBe('easeOutQuart');
-    expect(call[4]).toBe(0);
-    expect(call[5]).toBe(64);
-  });
-
-  it('overview hold before zoom', () => {
-    render(
-      <MapView guest={guestFixture({ tableNumber: '12' })} onClose={vi.fn()} />,
-    );
-    fireImageLoad();
-
-    // Before the 250ms hold elapses, zoomToElement should NOT have been called
-    expect(zoomToElement).not.toHaveBeenCalled();
-
-    advanceTimers(100);
-    expect(zoomToElement).not.toHaveBeenCalled();
-
-    advanceTimers(200); // total 300ms — past the 250ms threshold
-    expect(zoomToElement).toHaveBeenCalledTimes(1);
   });
 
   it('missing tableNumber shows fallback error card instead of the floor plan', () => {
@@ -125,7 +60,7 @@ describe('MapView', () => {
     );
 
     // The floor plan <img> must NOT render at all in the error path — we
-    // suppress the broken zoom UI to avoid a half-loaded surface.
+    // suppress the broken UI to avoid a half-loaded surface.
     expect(
       document.body.querySelector('img[alt="Reception floor plan"]'),
     ).toBeNull();
@@ -138,11 +73,6 @@ describe('MapView', () => {
     const errorCard = document.body.querySelector('.map-overlay-error-card');
     expect(errorCard).not.toBeNull();
     expect(errorCard!.getAttribute('role')).toBe('alert');
-
-    // Even after any pending timers fire, zoom must not be invoked — there
-    // is no assignedPinRef target when the table isn't on the plan.
-    advanceTimers(500);
-    expect(zoomToElement).not.toHaveBeenCalled();
   });
 
   it('picture element has avif + webp + png sources', () => {

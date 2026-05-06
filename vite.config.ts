@@ -81,7 +81,7 @@ export default defineConfig({
             urlPattern: ({ url }) => url.pathname.startsWith('/floor-plan/'),
             handler: 'CacheFirst',
             options: {
-              cacheName: 'floor-plan-images-v1',
+              cacheName: 'floor-plan-images-v2',
               expiration: {
                 maxEntries: 20,
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days

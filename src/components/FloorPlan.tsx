@@ -23,7 +23,7 @@ interface FloorPlanProps {
   // so a MutableRefObject from useRef<HTMLDivElement | null>(null) and callback
   // refs both satisfy the intrinsic <div ref={...}> prop under React 18 strict.
   assignedPinRef: React.Ref<HTMLDivElement>;
-  onImageLoad: () => void;
+  onImageLoad?: () => void;
   // Optional — when omitted, falls back to the imported floorPlan.json so the
   // guest code path behaves byte-identically. Setup's LivePreview passes a
   // synthetic config derived from draft pins (D-13).
@@ -123,7 +123,7 @@ export default function FloorPlan({
             decoding="async"
             onLoad={onImageLoad}
             ref={(el) => {
-              if (el && el.complete && el.naturalWidth > 0) onImageLoad();
+              if (el && el.complete && el.naturalWidth > 0) onImageLoad?.();
             }}
             className="floor-plan-image"
           />
@@ -143,7 +143,7 @@ export default function FloorPlan({
                 // If the browser already has the image cached (e.g. from the
                 // preload link in App.tsx), the onLoad event never fires because
                 // it completed before React attached the handler. Fire manually.
-                if (el && el.complete && el.naturalWidth > 0) onImageLoad();
+                if (el && el.complete && el.naturalWidth > 0) onImageLoad?.();
               }}
               className="floor-plan-image"
             />
